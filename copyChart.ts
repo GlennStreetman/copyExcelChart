@@ -32,9 +32,10 @@ function updateDrawingXML(
     const sourceDir = source.tempDir
     const targetDir = target.tempDir
     if (!target.worksheets[targetWorksheet].drawing) {
+        console.log('no drawing.xml')
         //if drawing.xml does not exist for target worksheet, copy source drawing.xml and set Relationships.relation =  source.drawingXML
         //make sure to update drawingXML rId = new rID passed into function. File name should match new drawing name.
-
+        b
         //this cannot be a equal copy. Only one of the source drawing xml subsections needs to be copied over if new file.
 
         // const chartName = getNewName('drawing1', target)
@@ -67,9 +68,11 @@ function updateDrawingRels(
     let rId: string = ''
     const sourceDir = source.tempDir
     const targetDir = target.tempDir
-    const drawingSourceRelsXML = fs.readFileSync(`${sourceDir}xl/drawings/${source.worksheets[sourceWorksheet].drawing}.xml`, { encoding: 'utf-8' }) //`${targetDir}xl/drawings/${drawingName}.xml`
+    const sourceDrawingName = source.worksheets[sourceWorksheet].drawing
+    const drawingSourceRelsXML = fs.readFileSync(`${sourceDir}xl/drawings/_rels/${sourceDrawingName}.xml.rels`, { encoding: 'utf-8' }) //`${targetDir}xl/drawings/${drawingName}.xml`
     const newChartName: string = getNewName(chartToCopy, target.chartList) //used for naming drawing.xml and drawing.xml.rels
     if (!target.worksheets[targetWorksheet].drawing) { //if drawing.xml does not exist for target worksheet
+        console.log('Parsing New drawingRels ')
         const newDrawingName = getNewName('drawing1', target.drawingList) //used for naming drawing.xml and drawing.xml.rels
         if (!fs.existsSync(`${targetDir}xl/drawings/_rels/`)) fs.mkdirSync(`${targetDir}xl/drawings/_rels/`, { recursive: true }) //make drawing directory if it doesnt exist yet.
 
@@ -90,22 +93,29 @@ function updateDrawingRels(
         return [rId, newChartName, newDrawingName]
 
     } else { //if drawing.xml exists for target worksheet combine <xdr:twoCellAnchor> tags from source and target drawing file. Update rId and ChartName
+        console.log('Parsing Old drawingRels ')
+
         let sourceRelTag
         xml2js.parseString(drawingSourceRelsXML, (error, editXML) => { //make a copy of the source relationship tag after updating rId & target.
-            editXML.Relationship.Relationship.forEach((rel) => {
-                const refChartName = rel.Target.replace('../charts/', '').replace('.xml.rels', '')
+            editXML.Relationships.Relationship.forEach((rel) => {
+                const refChartName = rel['$'].Target.replace('../charts/', '').replace('.xml', '')
+                // console.log('------------REL-------------', rel, refChartName, chartToCopy)
                 if (refChartName === chartToCopy) {
+                    console.log('MATCH FOUND', rel, refChartName, chartToCopy)
                     rId = getNewName('rId1', Object.values(target.worksheets[targetWorksheet].drawingRels))
-                    rel.Target = `../charts/${newChartName}.xml.rels`
                     sourceRelTag = rel
-                    sourceRelTag.Id = rId
-                    sourceRelTag.Target = `../charts/${newChartName}.xml.rels`
+                    sourceRelTag['$'].Id = rId
+                    sourceRelTag['$'].Target = `../charts/${newChartName}.xml`
                 }
             })
         })
-        const drawingTargetRelsXML = fs.readFileSync(`${targetDir}xl/drawings/${target.worksheets[sourceWorksheet].drawing}.xml`, { encoding: 'utf-8' })
+        console.log('sourceRelTag', sourceRelTag)
+        const targetName = target.worksheets[targetWorksheet].drawing
+        const drawingTargetPath = `${targetDir}xl/drawings/_rels/${targetName}.xml.rels`
+        const drawingTargetRelsXML = fs.readFileSync(drawingTargetPath, { encoding: 'utf-8' })
         xml2js.parseString(drawingTargetRelsXML, (error, editXML) => { //insert new relations tag into drawing?.xml.rel
-            editXML.Relationship.Relationship = editXML.Relationship.Relationship.concat(sourceRelTag)
+            console.log('editXML', editXML.Relationships.Relationship.concat(sourceRelTag))
+            editXML.Relationships.Relationship = editXML.Relationships.Relationship.concat(sourceRelTag)
             const builder = new xml2js.Builder()
             const xml = builder.buildObject(editXML)
             fs.writeFileSync(`${targetDir}/xl/drawings/_rels/${target.worksheets[targetWorksheet].drawing}.xml.rels`, xml)
@@ -127,7 +137,7 @@ export function copyChart(
     //add drawing tag
     //add drawing rel first, need to get rID and add tag for new drawing.
     const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
-    updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
+    // updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
     //chart rels
     //chart <--remember overrides
     //definedNames <--remember to update overrides
