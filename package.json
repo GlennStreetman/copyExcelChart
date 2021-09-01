@@ -1,0 +1,14 @@
+{
+    "type": "module",
+    "dependencies": {
+        "adm-zip": "^0.5.5",
+        "xml2js": "^0.4.23"
+    },
+    "devDependencies": {
+        "@types/node": "^16.7.4",
+        "typescript": "^4.4.2"
+    },
+    "scripts": {
+        "tscd": "npx tsc -w -p tsconfig.json"
+    }
+}
