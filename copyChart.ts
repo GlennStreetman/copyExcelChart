@@ -15,7 +15,6 @@ function copyDefineNames( //
     stringOverrides: stringOverrides,
 ) {
 
-    console.log('newDefinedNamesObj', newDefinedNamesObj)
 
     if (Object.keys(newDefinedNamesObj).length > 0) {
 
@@ -28,7 +27,6 @@ function copyDefineNames( //
         xml2js.parseString(souceDefs, (error, editXML) => { //read source workbook
             // console.log('fin2', editXML.workbook.definedNames[0].definedName)
             editXML.workbook.definedNames[0].definedName.forEach((rel) => {  //if source defineName in newDefinedNameObj, update definename.name and push to update list.
-                console.log('THIS REL', rel, stringOverrides[rel['_']])
                 if (newDefinedNamesObj[rel['$'].name]) rel['$'].name = newDefinedNamesObj[rel['$'].name]
                 if (stringOverrides[rel['_']]) rel['_'] = stringOverrides[rel['_']]
 
@@ -195,7 +193,6 @@ function addWorksheetRelsFile(
     const relList: any[] = []
     const worksheetXMLRels = fs.readFileSync(`${sourceDir}xl/worksheets/_rels/${target.worksheets[targetWorksheet].name}.xml.rels`, { encoding: 'utf-8' })
     xml2js.parseString(worksheetXMLRels, (error, editXML) => {
-        console.log('HERE:', editXML.Relationships.Relationship)
         editXML.Relationships.Relationship.forEach((rel) => {
             if (rel['$'].Target.includes(`../drawings/`)) {
                 rel['$'].Target = `../drawings/${newDrawingName}.xml`
@@ -414,14 +411,12 @@ export function copyChart(
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet)
         const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj) //need to add both of these files to content types
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
-        console.log('contentTypesUpdateObj: ', contentTypesUpdateObj)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     } else {
         const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
         updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
         const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj) //need to add both of these files to content types
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
-        console.log('contentTypesUpdateObj: ', contentTypesUpdateObj)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     }
 }

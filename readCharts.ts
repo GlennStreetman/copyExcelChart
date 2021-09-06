@@ -185,7 +185,7 @@ function findChartRels(chartList: chartList, tempFolder: string): chartRelList {
 function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string): [cellRefs, definedNameRefs] {
     const cellRefs: cellRefs = {}
     const definedNameRefs: definedNameRefs = {}
-
+    const tempRefs = {}
     Object.values(chartList).forEach((chartList) => {
         chartList.forEach((chart) => {
             cellRefs[chart] = []
@@ -205,13 +205,25 @@ function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string):
                 cellRefs[chart] = [...new Set(cellRefs[chart].concat(matchList))]
             })
             //some chart types use named ranges that are stored in worbook.xml. The refs to workbook.xml look like _xlchart.v
-            let definedNameRef = new RegExp(`>_xlchart.v[0-9]{1,9}.[0-9]{1,10}<`, 'g')
-            let matchingDefinedNameRefs = [...new Set(chartXML.match(definedNameRef))].map(el => el.slice(1, el.length - 1))
-            definedNameRefs[chart] = matchingDefinedNameRefs
-
+            definedNameRefs[chart] = []
+            let refRegex = new RegExp(`>_xlchart.v[0-9]{1,9}.[0-9]{1,10}<`, 'g')
+            let matchingDefinedNameRefs = [...new Set(chartXML.match(refRegex))].forEach((el) => {
+                tempRefs[el.slice(1, el.length - 1)] = chart
+            })
         })
-        //read CONTENT TYPES?
     })
+
+    // console.log('tempRefs', tempRefs)
+    const workbookXML = fs.readFileSync(`${tempFolder}/xl/workbook.xml`, { encoding: 'utf-8' })
+    xml2js.parseString(workbookXML, async (error, res) => {
+        if (res.workbook.definedNames) {
+            res.workbook.definedNames[0].definedName.forEach((el) => {
+                // console.log('el', el, tempRefs)
+                if (tempRefs[el['$'].name]) definedNameRefs[tempRefs[el['$'].name]].push(el['_'])
+            })
+        }
+    })
+    console.log('definedNameRefs', definedNameRefs)
     return [cellRefs, definedNameRefs]
 }
 
@@ -310,7 +322,11 @@ function readSheetNames(tempFolder: string): [sheetNames, defineNames] {
     return [sheetIds, definedName]
 }
 
-export function readCharts(sourceFile: string, tempFolder: string, source: boolean) {
+export function readCharts(
+    sourceFile: string, //location of file to read
+    tempFolder: string,  //location to store unzipped file.
+    source: boolean, //if true, saves to /tempFolder/chartSourceTemp. If false, saves to /tempFOlder/outputTemp
+) {
     const sourceFolder = source === true ? `${tempFolder}/chartSourceTemp/` : `${tempFolder}/outputTemp/`
     if (fs.existsSync(sourceFolder)) fs.rmdirSync(sourceFolder, { recursive: true }) //remove old files that have been parced at the same location.
     fs.mkdirSync(sourceFolder)
@@ -325,7 +341,6 @@ export function readCharts(sourceFile: string, tempFolder: string, source: boole
             const [cellRefs, definedNameRefs] = Object.keys(chartList).length > 0 ? findChartCellRefs(chartList, Object.keys(worksheetNames), sourceFolder) : [{}, {}]
             const chartRefs = Object.keys(chartList).length > 0 ? findChartRels(chartList, sourceFolder) : {}
             const chartDetails = buildChartDetails(sourceFolder, worksheetNames, drawingList, findDrawingXMLs, chartList, cellRefs, definedNameRefs, chartRefs, drawingrIds)
-            // console.log('chartDetails', chartDetails)
             resolve(chartDetails)
         } catch (error) {
             console.log('Read file error. Path: ', sourceFile, 'Error: ', error)
