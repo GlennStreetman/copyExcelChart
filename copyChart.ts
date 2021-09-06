@@ -8,10 +8,14 @@ interface stringOverrides {
     [key: string]: string
 }
 
-function copyDefineNames(
+function copyDefineNames( //
     sourceExcel: workbookChartDetails,
     targetExcel: workbookChartDetails,
-    newDefinedNamesObj: { [key: string]: string }) {
+    newDefinedNamesObj: { [key: string]: string },
+    stringOverrides: stringOverrides,
+) {
+
+    console.log('newDefinedNamesObj', newDefinedNamesObj)
 
     if (Object.keys(newDefinedNamesObj).length > 0) {
 
@@ -24,11 +28,11 @@ function copyDefineNames(
         xml2js.parseString(souceDefs, (error, editXML) => { //read source workbook
             // console.log('fin2', editXML.workbook.definedNames[0].definedName)
             editXML.workbook.definedNames[0].definedName.forEach((rel) => {  //if source defineName in newDefinedNameObj, update definename.name and push to update list.
-                // console.log('fin2.1', rel['$'].name)
-                if (newDefinedNamesObj[rel['$'].name]) {
-                    rel['$'].name = newDefinedNamesObj[rel['$'].name]
-                    addDefs.push(rel)
-                }
+                console.log('THIS REL', rel, stringOverrides[rel['_']])
+                if (newDefinedNamesObj[rel['$'].name]) rel['$'].name = newDefinedNamesObj[rel['$'].name]
+                if (stringOverrides[rel['_']]) rel['_'] = stringOverrides[rel['_']]
+
+                addDefs.push(rel)
             })
         })
         const outputWorkbook = `${targetDir}xl/workbook.xml`
@@ -39,7 +43,6 @@ function copyDefineNames(
             } else { //need to copy from old xml, and insure that definedNames follows </sheets> tag
                 const newWorkbookObj = {}
                 Object.entries(editXML.workbook).forEach(([key, val]) => {
-                    console.log('---------------', key, val)
                     if (key !== 'sheets') {
                         newWorkbookObj[key] = val
                     } else {
@@ -48,9 +51,6 @@ function copyDefineNames(
                     }
                 })
                 editXML.workbook = newWorkbookObj
-                // editXML.workbook.definedNames = [{ definedName: addDefs }]
-                // editXML.workbook.calcPr = editXML.workbook.calcPr
-                // editXML.workbook.extLst = editXML.workbook.extLst
             }
             const builder = new xml2js.Builder()
             const xml = builder.buildObject(editXML)
@@ -413,14 +413,14 @@ export function copyChart(
         addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet)
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet)
         const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj) //need to add both of these files to content types
-        copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj)
+        copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
         console.log('contentTypesUpdateObj: ', contentTypesUpdateObj)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     } else {
         const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
         updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
         const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj) //need to add both of these files to content types
-        copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj)
+        copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
         console.log('contentTypesUpdateObj: ', contentTypesUpdateObj)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     }

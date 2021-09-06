@@ -19,7 +19,11 @@ const testrun = async ()=>{
         'report-US-TSLA',
         'chartEx1',
         'test-EBIT',
-        {},
+        {
+            [`'EBIT-US-TSLA'!$B$2:$B$22`]: `'test-EBIT'!$B$2:$B$22`,
+            [`'EBIT-US-TSLA'!$C$1`]: `'test-EBIT'!$C$1`,
+            [`'EBIT-US-TSLA'!$C$2:$C$22`]: `'test-EBIT'!$C$2:$C$22`,
+        },
     )
     writeCharts(output, './product.xlsx')
 }
