@@ -1,7 +1,6 @@
-import fs, { access } from 'fs';
+import fs from 'fs';
 import xml2js from 'xml2js';
 import AdmZip from 'adm-zip';
-import util from 'util'
 
 
 export interface workbookChartDetails {
@@ -191,16 +190,31 @@ function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string):
             cellRefs[chart] = []
             const chartXML = fs.readFileSync(`${tempFolder}/xl/charts/${chart}.xml`, { encoding: 'utf-8' })
             aliaslist.forEach((alias) => { //worksheet alias refs in cell formulas are inconsistent. Somtimes they have commas sometimes they dont: Ex. 'worksheet1'!A1:B2 OR worksheet1!A1:B2
+
+                //find matching cell ranges
                 //check for matching without commas around names 
-                let worksheetCellRef = `${alias}!\\$[A-Z]{1,3}\\$[0-9]{1,7}:\\$[A-Z]{1,3}\\$[0-9]{1,7}`
-                let findCellRef = new RegExp(worksheetCellRef, 'g')
+                let worksheetCellRefRange = `${alias}!\\$[A-Z]{1,3}\\$[0-9]{1,7}:\\$[A-Z]{1,3}\\$[0-9]{1,7}`
+                let findCellRef = new RegExp(worksheetCellRefRange, 'g')
                 let matchListNoCommas = [...new Set(chartXML.match(findCellRef))]
                 //check for matching WITH commas around names 
-                worksheetCellRef = `'${alias}'!\\$[A-Z]{1,3}\\$[0-9]{1,7}:\\$[A-Z]{1,3}\\$[0-9]{1,7}`
-                findCellRef = new RegExp(worksheetCellRef, 'g')
+                worksheetCellRefRange = `'${alias}'!\\$[A-Z]{1,3}\\$[0-9]{1,7}:\\$[A-Z]{1,3}\\$[0-9]{1,7}`
+                findCellRef = new RegExp(worksheetCellRefRange, 'g')
                 let matchListCommas = [...new Set(chartXML.match(findCellRef))]
 
                 let matchList = [...new Set(matchListNoCommas.concat(matchListCommas))]
+
+                //find matching cell refs.
+                let worksheetCellRef = `${alias}!\\$[A-Z]{1,3}\\$[0-9]{1,7}<`
+                let findCellRefCell = new RegExp(worksheetCellRef, 'g')
+                let matchListCellNoCommas = [...new Set(chartXML.match(findCellRefCell))]
+                matchListCellNoCommas = matchListCellNoCommas.map(el => el.slice(0, el.length - 1))
+                //check for matching WITH commas around names 
+                worksheetCellRef = `'${alias}'!\\$[A-Z]{1,3}\\$[0-9]{1,7}<`
+                findCellRefCell = new RegExp(worksheetCellRef, 'g')
+                let matchListCellCommas = [...new Set(chartXML.match(findCellRefCell))]
+                matchListCellCommas = matchListCellCommas.map(el => el.slice(0, el.length - 1))
+
+                matchList = [...new Set(matchList.concat(matchListCellNoCommas).concat(matchListCellCommas))]
 
                 cellRefs[chart] = [...new Set(cellRefs[chart].concat(matchList))]
             })
@@ -223,7 +237,6 @@ function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string):
             })
         }
     })
-    console.log('definedNameRefs', definedNameRefs)
     return [cellRefs, definedNameRefs]
 }
 
@@ -325,9 +338,10 @@ function readSheetNames(tempFolder: string): [sheetNames, defineNames] {
 export function readCharts(
     sourceFile: string, //location of file to read
     tempFolder: string,  //location to store unzipped file.
-    source: boolean, //if true, saves to /tempFolder/chartSourceTemp. If false, saves to /tempFOlder/outputTemp
 ) {
-    const sourceFolder = source === true ? `${tempFolder}/chartSourceTemp/` : `${tempFolder}/outputTemp/`
+    const filePath = sourceFile.replace(/\\/, 'g')
+    const fileName = filePath.slice(filePath.lastIndexOf('/') + 1, filePath.length).replace('.xlsx', '/')
+    const sourceFolder = `${tempFolder}/${fileName}`
     if (fs.existsSync(sourceFolder)) fs.rmdirSync(sourceFolder, { recursive: true }) //remove old files that have been parced at the same location.
     fs.mkdirSync(sourceFolder)
     return new Promise((resolve, reject) => {
