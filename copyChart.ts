@@ -25,7 +25,6 @@ function copyDefineNames( //
         const sourceWookbook = `${sourceDir}xl/workbook.xml`
         const souceDefs = fs.readFileSync(sourceWookbook, { encoding: 'utf-8' })
         xml2js.parseString(souceDefs, (error, editXML) => { //read source workbook
-            // console.log('fin2', editXML.workbook.definedNames[0].definedName)
             editXML.workbook.definedNames[0].definedName.forEach((rel) => {  //if source defineName in newDefinedNameObj, update definename.name and push to update list.
                 if (newDefinedNamesObj[rel['$'].name]) rel['$'].name = newDefinedNamesObj[rel['$'].name]
                 if (stringOverrides[rel['_']]) rel['_'] = stringOverrides[rel['_']]
@@ -157,7 +156,6 @@ function copyChartFiles(
     Object.entries(stringOverrides).forEach(([key, val]) => {
         const newKey = key.replace(/\$/g, '\\$')
         const regExKey = new RegExp(`>${newKey}<`, 'g')
-        console.log('replace refs:', newKey, regExKey, val)
         sourceChartXML = sourceChartXML.replace(regExKey, `>${val}<`)
     })
 
@@ -195,9 +193,7 @@ function addWorksheetRelsFile(
     if (!fs.existsSync(`${targetDir}xl/worksheets/_rels/`)) fs.mkdirSync(`${targetDir}xl/worksheets/_rels/`, { recursive: true }) //make worksheet rels directory if it doesnt exist yet.
     //copy worksheet rels file over
     const relList: any[] = []
-    console.log('here ', targetWorksheet, source.worksheets[sourceWorksheet])
     const worksheetXMLRels = fs.readFileSync(`${sourceDir}xl/worksheets/_rels/${source.worksheets[sourceWorksheet].name}.xml.rels`, { encoding: 'utf-8' })
-    console.log('then here ')
 
     xml2js.parseString(worksheetXMLRels, (error, editXML) => {
         editXML.Relationships.Relationship.forEach((rel) => {
@@ -295,7 +291,6 @@ function updateDrawingXML(         //if drawing.xml exists for target worksheet 
         drawingSource['mc:AlternateContent'][0]['mc:Choice'][0]['xdr:graphicFrame'][0]['a:graphic'][0]['a:graphicData'][0]['cx:chart'][0]['$']['r:id'] = rId
     }
 
-    console.log('drawingSource', drawingSource, 'writing: ', target.worksheets[targetWorksheet].drawing)
     const drawingXML = fs.readFileSync(`${targetDir}xl/drawings/${target.worksheets[targetWorksheet].drawing}.xml`, { encoding: 'utf-8' })
     xml2js.parseString(drawingXML, (error, editXML) => {
         //replace source drawing ref with new ref. Remember to update drawing ref in target. 
@@ -378,7 +373,6 @@ function updateDrawingRels(  //if drawing.xml exists for target worksheet combin
         editXML.Relationships.Relationship.forEach((rel) => {
             const refChartName = rel['$'].Target.replace('../charts/', '').replace('.xml', '')
             if (refChartName === chartToCopy) {
-                console.log('MATCH FOUND', rel, refChartName, chartToCopy)
                 rId = getNewName('rId1', Object.values(target.worksheets[targetWorksheet].drawingRels))
                 target.worksheets[targetWorksheet][newChartName] = rId
                 sourceRelTag = rel

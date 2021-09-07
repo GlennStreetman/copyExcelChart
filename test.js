@@ -31,19 +31,50 @@ const testrun = async ()=>{
             [`'EBIT-US-TSLA'!$C$2:$C$22`]: `'EBIT'!$C$2:$C$16`,
         },
     )
+    
     console.log('----------Starting on chart2: -----------')
-    let newOverrides = source.summary().sourceWorksheet['chart2'].reduce((acc, el)=>{
+    let chart2Overrides = source.summary().sourceWorksheet['chart2'].reduce((acc, el)=>{
         return {...acc, [el]: el.replace('candle-US-TSLA', 'candle')}
     }, {})
-    console.log('new overrides', newOverrides)
+    // console.log('new overrides', chart2Overrides)
     copyChart(
         source,
         output,
         'sourceWorksheet',
         'chart2',
         'candle',
-        newOverrides,
+        chart2Overrides,
     )
+
+    console.log('----------Starting on chart3: -----------')
+    let chart3Overrides = source.summary().sourceWorksheet['chart3'].reduce((acc, el)=>{
+        return {...acc, [el]: el.replace('cashRatio-US-TSLA', 'cashRatio').replace('22', '15')}
+    }, {})
+    // console.log('new overrides', chart3Overrides)
+    copyChart(
+        source,
+        output,
+        'sourceWorksheet',
+        'chart3',
+        'cashRatio',
+        chart3Overrides,
+    )
+
+    console.log('----------Starting on chart4: -----------')
+    let chart4Overrides = source.summary().sourceWorksheet['chart1'].reduce((acc, el)=>{
+        return {...acc, [el]: el.replace('recommendation-US-TSLA', 'Recommendation')}
+    }, {})
+    console.log('new overrides', chart4Overrides)
+    copyChart(
+        source,
+        output,
+        'sourceWorksheet',
+        'chart1',
+        'Recommendation',
+        chart4Overrides,
+    )
+    
+    
     writeCharts(output, './product.xlsx')
     // fs.rmdirSync('./output', { recursive: true })
 }
