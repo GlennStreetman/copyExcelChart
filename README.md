@@ -1,20 +1,22 @@
-Copy charts between excel files using Node file system operations. Currently working with basic charts that pull data from cell ranges. Not yet tested with pivot charts or charts that reference named ranges or tables.
+#Copy charts between excel files using Node file system operations. 
+##Currently working with basic charts that pull data from cell ranges. 
+###Not yet tested with pivot charts or charts that reference named ranges or tables.
 
-Dependancies:
+#Dependancies:
 xm2js
 AdmZip
 
-Usage: 
+#Usage: 
 
 import {readCharts} from './build/readCharts.js'
 import {copyChart} from './build/copyChart.js'
 import {writeCharts} from './build/writeChart.js'
 
 //Create a working folder.
-if(!fs.existsSync('./output')) fs.mkdirSync('./output') 
+if(!fs.existsSync('./working')) fs.mkdirSync('./working') 
 
 //read excel file that contains source chart
-const source = await readCharts('./source.xlsx', './output) //params: excel file location, working directory.
+const source = await readCharts('./source.xlsx', './working) //params: excel file location, working directory.
 
 //example source workbook contains multiple worksheets, the worksheet "chartWorksheet" contains four charts.
 //print summary object. {[WorksheetName(s)]: [chart(s)]: [cell reference list]}
@@ -66,8 +68,8 @@ RETURNS:
 }
 
 
-<!-- read excel file that charts are going to be copied into -->
-const output = await readCharts('./target.xlsx', './output') 
+//read excel file that charts are going to be copied into
+const output = await readCharts('./target.xlsx', './working') 
 console.log(output.summary())
 
 RETURNS:
@@ -80,6 +82,7 @@ RETURNS:
 
 
 //create a cell reference replacement object so that that charts cell references dont all break after copying the chart into a new workbook.
+// format: {[old reference]: new reference} example: {oldworksheet!A1:B20: newWorksheet!A1:B15}
 const replaceCellRefs = source.summary().sourceWorksheet['chart1'].reduce((acc, el)=>{
     return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
 }, {})
@@ -94,5 +97,11 @@ copyChart(
     replaceCellRefs, //object containing key value pairs of cell references that will be replaced while chart is being copied.
 )
 
-//from output, write new file: product.xlsx
-writeCharts(output, './product.xlsx')
+//if additional charts need to be copied do so here.
+
+
+// write new file: product.xlsx
+writeCharts(output, './product.xlsx') //source read , file name including relative or absolute path.
+
+//clean up old files
+fs.rmdirSync('./working', { recursive: true })
