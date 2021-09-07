@@ -11,6 +11,8 @@ export interface workbookChartDetails {
     chartList: string[],
     defineNames: string[],
     summary: Function,
+    colorList: string[],
+    styleList: string[],
 }
 
 export interface worksheets {
@@ -103,6 +105,15 @@ function buildDrawingList(drawingList: drawingRels): string[] {
     return allDrawings
 }
 
+function buildFileList(chartRels: chartRelList, ref: string) {
+    const returnList: string[] = []
+    Object.values(chartRels).forEach((chart) => {
+        returnList.push(chart[ref])
+
+    })
+    return returnList
+}
+
 function buildChartDetails(
     tempFolder: string,
     worksheetNames: sheetNames,
@@ -120,6 +131,8 @@ function buildChartDetails(
         drawingXMLs: drawingXMLs,
         chartList: buildChartList(chartList),
         defineNames: buildChartList(definedNameRefs),
+        colorList: buildFileList(chartRels, 'colors'),
+        styleList: buildFileList(chartRels, 'style'),
         worksheets: function () {
             const worksheetList = Object.entries(worksheetNames).reduce((acc, [key, val]) => {
                 return {

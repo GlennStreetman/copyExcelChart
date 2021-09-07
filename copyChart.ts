@@ -135,14 +135,16 @@ function copyChartFiles(
 
     if (!fs.existsSync(`${targetDir}xl/charts/_rels/`)) fs.mkdirSync(`${targetDir}xl/charts/_rels/`, { recursive: true })
 
+    const getNewColorsFileName = getNewName('colors1', targetExcel.colorList)
+    const getNewStyleFileName = getNewName('style1', targetExcel.styleList)
 
     //COPY SOURCE RELS FILE
     const sourceRelsFile = `${sourceDir}xl/charts/_rels/${chartToCopy}.xml.rels`
     const sourceRelsXML = fs.readFileSync(sourceRelsFile, { encoding: 'utf-8' })
     xml2js.parseString(sourceRelsXML, (error, editXML) => {
         editXML.Relationships.Relationship.forEach((rel) => {  //update rels with new chart name
-            if (rel['$'].Target.includes('colors')) rel['$'].Target = `colors${newChartName.replace(/[A-z]/g, '')}.xml`
-            if (rel['$'].Target.includes('style')) rel['$'].Target = `style${newChartName.replace(/[A-z]/g, '')}.xml`
+            if (rel['$'].Target.includes('colors')) rel['$'].Target = `${getNewColorsFileName}.xml`
+            if (rel['$'].Target.includes('style')) rel['$'].Target = `${getNewStyleFileName}.xml`
         })
         const builder = new xml2js.Builder()
         const xml = builder.buildObject(editXML)
@@ -171,9 +173,10 @@ function copyChartFiles(
 
     //COPY Chart colors?.xml and style?.xml
     Object.entries(sourceExcel.worksheets[sourceWorksheet].charts[chartToCopy].chartRels).forEach(([key, val]) => {
-        const updateFileName = `${key}${newChartName.replace(/[A-z]/g, '')}.xml`
-        fs.copyFileSync(`${sourceDir}xl/charts/${val}.xml`, `${targetDir}xl/charts/${updateFileName}`)
-        contentTypesUpdateObj[`/xl/charts/${val}.xml`] = `/xl/charts/${updateFileName}`
+        // const updateFileName = `${key}${newChartName.replace(/[A-z]/g, '')}.xml`
+        const thisFileName = key === 'colors' ? getNewColorsFileName : getNewStyleFileName
+        fs.copyFileSync(`${sourceDir}xl/charts/${val}.xml`, `${targetDir}xl/charts/${thisFileName}.xml`)
+        contentTypesUpdateObj[`/xl/charts/${val}.xml`] = `/xl/charts/${thisFileName}.xml`
     })
 
     return newDefinedNamesObj
@@ -415,7 +418,7 @@ export function copyChart(
         console.log('4')
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet)
         console.log('5')
-        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj) //need to add both of these files to content types
+        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj)
         console.log('6')
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
         console.log('7')
@@ -426,7 +429,7 @@ export function copyChart(
         console.log('2a')
         updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
         console.log('3a')
-        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj) //need to add both of these files to content types
+        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj)
         console.log('4a')
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
         console.log('5a')

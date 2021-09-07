@@ -13,10 +13,10 @@ const testrun = async ()=>{
     // fs.copyFileSync(`./testSource2.xlsx`, `./test.xlsx`)
 
     const source = await readCharts('./test.xlsx', './output')
-    // console.log(util.inspect(source, false, null, true))
-    console.log('source', source.summary())
+    console.log(util.inspect(source, false, null, true))
+    // console.log('source', source.summary())
     const output = await readCharts('./testOutput.xlsx', './output')
-    // console.log('output', util.inspect(output, false, null, true))
+    console.log('output', util.inspect(output, false, null, true))
     // console.log('output', output)
     console.log('----------Starting on chart1: -----------')
     copyChart(
