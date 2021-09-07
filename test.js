@@ -20,6 +20,8 @@ const testrun = async ()=>{
         return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
     }, {})
 
+    console.log(replaceCellRefs)
+
     copyChart(
         source,
         output,
