@@ -8,4 +8,4 @@ const copyExcelChart = {
     writeCharts: copyChart,
 }
 
-module.exports.copyExcelChart = copyExcelChart
+export default copyExcelChart
