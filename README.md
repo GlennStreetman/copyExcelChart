@@ -9,10 +9,8 @@
 ## Installation
 npm i copy-excel-chart
 
-## Usage: 
-
-### Working snippet, full explanation below: 
-Excel files used in this test example can be found in the test folder of this package.
+### Working Code Example, additional explanation shown below under "Usage" heading: 
+All Excel files used in these examples can be found in the test folder of this package.
 ```
 import copyExcelChart from 'copy-excel-chart'
 import fs from 'fs'
@@ -43,7 +41,7 @@ writeCharts(output, './product.xlsx')
 fs.rmdirSync('./working', { recursive: true })
 
 ```
-
+## Usage: 
 Setup imports
 ```
 import copyExcelChart from 'copy-excel-chart'
