@@ -20,8 +20,6 @@ const readCharts = copyExcelChart.readCharts
 const copyChart = copyExcelChart.copyChart
 const writeCharts = copyExcelChart.writeCharts
 
-console.log('----test----', readCharts)
-
 if(!fs.existsSync('./working')) fs.mkdirSync('./working')
 
 const source = await readCharts('./source.xlsx', './working') 
