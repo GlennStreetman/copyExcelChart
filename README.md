@@ -1,19 +1,19 @@
-# Copy charts between excel files using Node file system operations. 
+## Copy charts between excel files using Node file system operations. 
  Currently working with basic charts that pull data from cell ranges. <br>
  Not yet tested with pivot charts or charts that reference named ranges or tables.
 
-# Dependancies:
-xm2js <br>
-AdmZip <br>
+## Dependancies:
+[xm2js](https://www.npmjs.com/package/xml2js) <br> : Used to convert excel .xml source files into JSON objects.
+[AdmZip](https://www.npmjs.com/package/adm-zip) <br> : Used to unzip .xlsx files into individual .xml files.
 
-# Setup
+## Setup
 Clone this repository
 Compile the source typescript files.
 ```
 npm run tscd 
 ```
 
-# Usage: 
+## Usage: 
 
 ```
 import {readCharts} from './build/readCharts.js'
