@@ -409,30 +409,18 @@ export function copyChart(
 
     if (!targetExcel.worksheets[targetWorksheet].drawing) { //if no drawing for target worksheet.
         //add chart tag to worksheet
-        console.log('1')
         const [rId, newChartName, newDrawingName] = newDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
-        console.log('2')
         newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, contentTypesUpdateObj)
-        console.log('3')
         addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet)
-        console.log('4')
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet)
-        console.log('5')
         const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj)
-        console.log('6')
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
-        console.log('7')
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     } else {
-        console.log('1a')
         const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
-        console.log('2a')
         updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
-        console.log('3a')
         const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj)
-        console.log('4a')
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
-        console.log('5a')
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     }
 }

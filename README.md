@@ -11,10 +11,47 @@ npm i copy-excel-chart
 
 ## Usage: 
 
+### Working snippet, full explanation below: 
+Excel files used in this test example can be found in the test folder of this package.
 ```
-import copyExcelChart from 'copy-excel-chart
+import copyExcelChart from 'copy-excel-chart'
+import fs from 'fs'
 const readCharts = copyExcelChart.readCharts
-const copyCharts = copyExcelChart.readCharts
+const copyChart = copyExcelChart.copyChart
+const writeCharts = copyExcelChart.writeCharts
+
+console.log('----test----', readCharts)
+
+if(!fs.existsSync('./working')) fs.mkdirSync('./working')
+
+const source = await readCharts('./source.xlsx', './working') 
+const output = await readCharts('./target.xlsx', './working') 
+
+const replaceCellRefs = source.summary()['chartWorksheet']['chart1'].reduce((acc, el)=>{
+    return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
+}, {})
+
+copyChart(
+    source, 
+    output, 
+    'chartWorksheet', 
+    'chart1', 
+    'worksheet-Recommendation', 
+    replaceCellRefs, 
+)
+
+writeCharts(output, './product.xlsx') 
+
+fs.rmdirSync('./working', { recursive: true })
+
+```
+
+Setup imports
+```
+import copyExcelChart from 'copy-excel-chart'
+import fs from 'fs'
+const readCharts = copyExcelChart.readCharts
+const copyChart = copyExcelChart.copyChart
 const writeCharts = copyExcelChart.writeCharts
 ```
 
@@ -33,12 +70,17 @@ Function readCharts(
 Returns an Object describing the source files charts.<br>
 readCharts() also creates a working folder that contains the individual xml source files from the provided .xlsx file.<br>
 ```
-const source = await readCharts('./source.xlsx', './working) 
+const source = await readCharts('./source.xlsx', './working') 
 ```
 
-Run source.summary() to get a list of worksheets, each worksheets charts, and each charts cell references. <br>
- source.summary() <br>
- returns {[WorksheetName(s)]: [chart(s)]: [cell reference list]} <br>
+Run source.summary() to get a list of worksheets, each worksheets charts, and each charts cell references. This is a helper function. <br>
+```
+Function source.summary()
+ ```
+<br>
+Returns {[WorksheetName(s)]: [chart(s)]: [cell reference list]} <br>
+Summary return objects are the easiest way to access worksheet names, chart names, and cell references. <br>
+You can always choose to console.log(source) to get a full list of everything related to a workbook that this package uses.
 
 ```
 console.log('Worksheet Summary:', source.summary()) 
