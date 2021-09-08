@@ -9,8 +9,8 @@
 ## Installation
 npm i copy-excel-chart
 
-### Working Code Example, additional explanation shown below under "Usage" heading: 
-All Excel files used in these examples can be found in the test folder of this package.
+### Working Code Example, additional explanation shown below under "Usage" heading: <br>
+All Excel files used in these examples can be found in the test folder of this package. <br>
 ```
 import copyExcelChart from 'copy-excel-chart'
 import fs from 'fs'
@@ -18,27 +18,32 @@ const readCharts = copyExcelChart.readCharts
 const copyChart = copyExcelChart.copyChart
 const writeCharts = copyExcelChart.writeCharts
 
-if(!fs.existsSync('./working')) fs.mkdirSync('./working')
+async function test(){
 
-const source = await readCharts('./source.xlsx', './working') 
-const output = await readCharts('./target.xlsx', './working') 
+    if(!fs.existsSync('./working')) fs.mkdirSync('./working')
 
-const replaceCellRefs = source.summary()['chartWorksheet']['chart1'].reduce((acc, el)=>{
-    return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
-}, {})
+    const source = await readCharts('./source.xlsx', './working') 
+    const output = await readCharts('./target.xlsx', './working') 
 
-copyChart(
-    source, 
-    output, 
-    'chartWorksheet', 
-    'chart1', 
-    'worksheet-Recommendation', 
-    replaceCellRefs, 
-)
+    const replaceCellRefs = source.summary()['chartWorksheet']['chart1'].reduce((acc, el)=>{
+        return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
+    }, {})
 
-writeCharts(output, './product.xlsx') 
+    copyChart(
+        source, 
+        output, 
+        'chartWorksheet', 
+        'chart1', 
+        'worksheet-Recommendation', 
+        replaceCellRefs, 
+    )
 
-fs.rmdirSync('./working', { recursive: true })
+    writeCharts(output, './product.xlsx') 
+
+    fs.rmdirSync('./working', { recursive: true })
+}
+
+test()
 
 ```
 ## Usage: 
