@@ -1,14 +1,13 @@
 ## Copy charts between excel files using Node file system operations. 
- Currently working with basic charts that pull data from cell ranges. <br>
+ Currently working with basic excel .xlsx charts, that pull data from cell ranges. <br>
  Not yet tested with pivot charts or charts that reference named ranges or tables.
 
 ## Dependancies:
-[xm2js](https://www.npmjs.com/package/xml2js) <br> : Used to convert excel .xml source files into JSON objects.
-[AdmZip](https://www.npmjs.com/package/adm-zip) <br> : Used to unzip .xlsx files into individual .xml files.
+[xm2js](https://www.npmjs.com/package/xml2js) : Used to convert excel .xml source files into JSON objects. <br> 
+[AdmZip](https://www.npmjs.com/package/adm-zip) : Used to unzip .xlsx files into individual .xml files <br> 
 
 ## Setup
-Clone this repository
-Compile the source typescript files.
+Clone this repository then compile the source typescript files.
 ```
 npm run tscd 
 ```
@@ -27,15 +26,22 @@ Create a working folder:
 if(!fs.existsSync('./working')) fs.mkdirSync('./working') 
 ```
 
-Read an excel file that contains source charts: <br>
-readCharts(source File: string, working directory: string): Returns Object describing source file charts.<br>
-readCharts also creates a working folder that contains the individual xml source files from the provided xlsx file.<br>
+Read an excel file that contains source charts useing the readCharts() function. <br>
+```
+Function readCharts(
+    source File: string, 
+    working directory: string
+)
+```
+Returns an Object describing the source files charts.<br>
+readCharts() also creates a working folder that contains the individual xml source files from the provided .xlsx file.<br>
 ```
 const source = await readCharts('./source.xlsx', './working) 
 ```
 
 Run source.summary() to get a list of worksheets, each worksheets charts, and each charts cell references. <br>
- source.summary() returns {[WorksheetName(s)]: [chart(s)]: [cell reference list]} <br>
+ source.summary() <br>
+ returns {[WorksheetName(s)]: [chart(s)]: [cell reference list]} <br>
 
 ```
 console.log('Worksheet Summary:', source.summary()) 
@@ -46,13 +52,13 @@ console.log('Worksheet Summary:', source.summary())
 >        cashWorksheet4: {}, //worksheet with no charts
 >    candleWorksheet3: {}, //worksheet with no charts
 >    chartWorksheet: { //worksheetwith 4 charts.
->        chart3: [
->            'cashWorksheet4!$B$2:$B$22', //chart3 cell references
+>        chart3: [ //chart3 cell reference array
+>            'cashWorksheet4!$B$2:$B$22', 
 >            'cashWorksheet4!$C$2:$C$22',
 >            'cashWorksheet4!$C$1'
 >        ],
->        chart2: [
->            'candleWorksheet3!$B$2:$B$26', //chart2 cell references
+>        chart2: [ //chart2 cell reference array
+>            'candleWorksheet3!$B$2:$B$26', 
 >            'candleWorksheet3!$C$2:$C$26',
 >            'candleWorksheet3!$B$2:$B$27',
 >            'candleWorksheet3!$D$2:$D$26',
@@ -63,8 +69,8 @@ console.log('Worksheet Summary:', source.summary())
 >            'candleWorksheet3!$E$1',
 >            'candleWorksheet3!$F$1'
 >        ],
->        chart1: [
->            'recommendWorksheet2!$B$2:$B$42', //chart1 cell references
+>        chart1: [ //chart1 cell reference array
+>            'recommendWorksheet2!$B$2:$B$42', 
 >            'recommendWorksheet2!$C$2:$C$42',
 >            'recommendWorksheet2!$D$2:$D$42',
 >            'recommendWorksheet2!$E$2:$E$42',
@@ -76,8 +82,8 @@ console.log('Worksheet Summary:', source.summary())
 >            'recommendWorksheet2!$F$1',
 >            'recommendWorksheet2!$G$1'
 >        ],
->        chartEx1: [
->            'earningsWorksheet1!$B$2:$B$22', //chartEx1 cell references
+>        chartEx1: [ //chartEx1 cell reference array
+>            'earningsWorksheet1!$B$2:$B$22', 
 >            'earningsWorksheet1!$C$1',
 >            'earningsWorksheet1!$C$2:$C$22'
 >        ]
@@ -85,7 +91,7 @@ console.log('Worksheet Summary:', source.summary())
 > }
 ```
 
-Repeat the steps of above for the excel that your will be copying charts into. <br>
+Repeat the steps of above for the excel xlsx file that your will be copying charts into. <br>
 ```
 const output = await readCharts('./target.xlsx', './working') 
 console.log('Worksheet Summary:', output.summary())
@@ -98,10 +104,12 @@ console.log('Worksheet Summary:', output.summary())
 > }
 ```
 
-Create a cell reference replacement object so that that charts cell references dont all break after copying the chart into a new workbook. <br>
-Format: {[old reference]: new reference} <br> example: {oldworksheet!A1:B20: newWorksheet!A1:B15}
+Create a cell reference replacement object. <br>
+This step is necesarry if the new chart needs cell references that point to a new location. <br>
+Replacement Object: {[old reference]: new reference} <br>
+example: {oldworksheet!A1:B20: newWorksheet!A1:B15}<br>
 ```
-const replaceCellRefs = source.summary().sourceWorksheet['chart1'].reduce((acc, el)=>{
+const replaceCellRefs = source.summary()['chartWorksheet']['chart1'].reduce((acc, el)=>{
     return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
 }, {})
 console.log('Cell Reference overrides:', replaceCellRefs)
@@ -121,23 +129,39 @@ console.log('Cell Reference overrides:', replaceCellRefs)
 > }
 
 ```
-
-Copy chart from source working file to output working file.<br>
+Copy a chart from source working file to output working file using the copyChart() function.<br>
+```
+Function copyChart( 
+    from Object: readCharts() return object, 
+    to Object: readCharts() return object,  
+    source worksheet: string,
+    source chart: string,  
+    move to worksheet: string, 
+    cell reference overrides: {[key: string]: string} 
+)
+```
+copyChart edits the to Objects working file .xmls
 ```
 copyChart(
-    source, //readCharts return object
-    output, //readCharts return object
-    'chartWorksheet', //worksheet, in source file, that chart will be copied from
-    'chart1', //chart, in source file, that will be copied
-    'worksheet-Recommendation', //worksheet, in output file, that chart will be copied to
-    replaceCellRefs, //object containing key value pairs of cell references that will be replaced while chart is being copied.
+    source, 
+    output, 
+    'chartWorksheet', 
+    'chart1', 
+    'worksheet-Recommendation', 
+    replaceCellRefs, 
 )
 ```
 
-If additional charts need to be copied do so here. <br>
-Write new file: product.xlsx from output working file: <br>
+If additional charts need to be copied do so here by performing addtional copyChart() operations. <br>
 ```
-writeCharts(output, './product.xlsx') //source read , file name including relative or absolute path.
+Function writeChart(
+    to Object: readCharts() return object,
+    file name: string
+)
+```
+Write a new excel file: product.xlsx from the output working file using the writeChart() function <br>
+```
+writeCharts(output, './product.xlsx') 
 ```
 
 Clean up old files <br>
