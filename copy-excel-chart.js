@@ -5,7 +5,7 @@ import {writeCharts} from './build/writeChart.js'
 const copyExcelChart = {
     readCharts: readCharts,
     copyChart: copyChart,
-    writeCharts: copyChart,
+    writeCharts: writeCharts,
 }
 
 export default copyExcelChart
