@@ -1,5 +1,8 @@
 {
     "type": "module",
+    "name": "copy-excel-chart",
+    "description": "Copy .xlsx charts between .xlsx files.",
+    "version": "1.0.0",
     "dependencies": {
         "adm-zip": "^0.5.5",
         "xml2js": "^0.4.23"

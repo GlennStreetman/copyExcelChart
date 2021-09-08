@@ -6,22 +6,19 @@
 [xm2js](https://www.npmjs.com/package/xml2js) : Used to convert excel .xml source files into JSON objects. <br> 
 [AdmZip](https://www.npmjs.com/package/adm-zip) : Used to unzip .xlsx files into individual .xml files <br> 
 
-## Setup
-Clone this repository then compile the source typescript files.
-```
-npm run tscd 
-```
+## Installation
+npm i copy-excel-chart
 
 ## Usage: 
 
 ```
-import {readCharts} from './build/readCharts.js'
-import {copyChart} from './build/copyChart.js'
-import {writeCharts} from './build/writeChart.js'
-import fs from 'fs';
+import copyExcelChart from 'copy-excel-chart
+const readCharts = copyExcelChart.readCharts
+const copyCharts = copyExcelChart.readCharts
+const writeCharts = copyExcelChart.writeCharts
 ```
 
-Create a working folder:
+Create a working folder. Make sure fs is imported!
 ```
 if(!fs.existsSync('./working')) fs.mkdirSync('./working') 
 ```
