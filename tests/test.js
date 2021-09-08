@@ -1,18 +1,19 @@
-import {readCharts} from './build/readCharts.js'
-import {copyChart} from './build/copyChart.js'
-import {writeCharts} from './build/writeChart.js'
+import {readCharts} from './../build/readCharts.js'
+import {copyChart} from './../build/copyChart.js'
+import {writeCharts} from './../build/writeChart.js'
 // import util from 'util'
 import fs from 'fs';
 
 const testrun = async ()=>{
     
-    if(!fs.existsSync('./working')) fs.mkdirSync('./working')
+    console.log('----starting test----')
+    if(!fs.existsSync('./tests//working')) fs.mkdirSync('./tests/working')
 
-    const source = await readCharts('./source.xlsx', './working')
+    const source = await readCharts('./tests/source.xlsx', './tests/working')
     // console.log(util.inspect(source, false, null, true))
     console.log('source', source.summary())
 
-    const output = await readCharts('./target.xlsx', './working')
+    const output = await readCharts('./tests/target.xlsx', './tests/working')
     // console.log(util.inspect(output, false, null, true))
     console.log('source', output.summary())
 
@@ -31,8 +32,8 @@ const testrun = async ()=>{
         replaceCellRefs, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
     
-    writeCharts(output, './product.xlsx')
-    fs.rmdirSync('./working', { recursive: true })
+    writeCharts(output, './tests/product.xlsx')
+    fs.rmdirSync('./tests/working', { recursive: true })
 }
 
 testrun()
