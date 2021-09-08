@@ -1,8 +1,10 @@
 {
     "type": "module",
+    "author": "Glenn Streetman",
     "name": "copy-excel-chart",
     "description": "Copy .xlsx charts between .xlsx files.",
-    "version": "1.0.0",
+    "main": "copy-excel-chart.js",
+    "version": "1.0.001",
     "dependencies": {
         "adm-zip": "^0.5.5",
         "xml2js": "^0.4.23"
@@ -13,5 +15,18 @@
     },
     "scripts": {
         "tscd": "npx tsc -w -p tsconfig.json"
-    }
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/GlennStreetman/copyExcelChart"
+    },
+    "license": "Apache-2.0",
+    "keywords": [
+        "excel",
+        "xlsx",
+        "chart",
+        "graph",
+        "office",
+        "spreadsheet"
+    ]
 }
