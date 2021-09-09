@@ -117,6 +117,42 @@ function getNewDdefinedNameRef(newName: string, targetList: string[], iterator =
     }
 }
 
+
+function findChartCellRefs(xml: string, worksheetList: string[]): string[] {
+
+    let tempRefs: any = []
+    worksheetList.forEach((worksheet) => {
+
+        let worksheetCellRefRange = `${worksheet}!\\$[A-Z]{1,3}\\$[0-9]{1,7}:\\$[A-Z]{1,3}\\$[0-9]{1,7}`
+        let findCellRef = new RegExp(worksheetCellRefRange, 'g')
+        let matchListNoCommas = [...new Set(xml.match(findCellRef))]
+        //check for matching WITH commas around names 
+        worksheetCellRefRange = `'${worksheet}'!\\$[A-Z]{1,3}\\$[0-9]{1,7}:\\$[A-Z]{1,3}\\$[0-9]{1,7}`
+        findCellRef = new RegExp(worksheetCellRefRange, 'g')
+        let matchListCommas = [...new Set(xml.match(findCellRef))]
+
+        tempRefs = [...new Set(tempRefs.concat(matchListNoCommas.concat(matchListCommas)))]
+        //find matching cell refs.
+        let worksheetCellRef = `${worksheet}!\\$[A-Z]{1,3}\\$[0-9]{1,7}<`
+        let findCellRefCell = new RegExp(worksheetCellRef, 'g')
+        let matchListCellNoCommas = [...new Set(xml.match(findCellRefCell))]
+        matchListCellNoCommas = matchListCellNoCommas.map(el => el.slice(0, el.length - 1))
+        //check for matching WITH commas around names 
+        worksheetCellRef = `'${worksheet}'!\\$[A-Z]{1,3}\\$[0-9]{1,7}<`
+        findCellRefCell = new RegExp(worksheetCellRef, 'g')
+        let matchListCellCommas = [...new Set(xml.match(findCellRefCell))]
+        matchListCellCommas = matchListCellCommas.map(el => el.slice(0, el.length - 1))
+
+        tempRefs = [...new Set(tempRefs.concat(matchListCellNoCommas).concat(matchListCellCommas))]
+
+        tempRefs = [...new Set(tempRefs.concat(tempRefs))]
+    })
+
+    console.log('findChartCellRefs', tempRefs, worksheetList)
+
+    return tempRefs
+}
+
 function copyChartFiles(
     sourceExcel: workbookChartDetails,
     targetExcel: workbookChartDetails,
@@ -124,11 +160,9 @@ function copyChartFiles(
     chartToCopy: string,
     newChartName: string,
     stringOverrides: stringOverrides,
-    contentTypesUpdateObj: { [key: string]: string }
+    contentTypesUpdateObj: { [key: string]: string },
+    targetWorksheet: string,
 ) {
-    //copy all four files, update names
-
-    //update string overrides for chart.xml
 
     const sourceDir = sourceExcel.tempDir
     const targetDir = targetExcel.tempDir
@@ -137,6 +171,7 @@ function copyChartFiles(
 
     const getNewColorsFileName = getNewName('colors1', targetExcel.colorList)
     const getNewStyleFileName = getNewName('style1', targetExcel.styleList)
+
 
     //COPY SOURCE RELS FILE
     const sourceRelsFile = `${sourceDir}xl/charts/_rels/${chartToCopy}.xml.rels`
@@ -168,6 +203,9 @@ function copyChartFiles(
         return { ...acc, [el]: newDefinedNameRef }
     }, {})
 
+    console.log('newDefinedNamesObj', newDefinedNamesObj)
+
+
     fs.writeFileSync(`${targetDir}/xl/charts/${newChartName}.xml`, sourceChartXML)
     contentTypesUpdateObj[`/xl/charts/${chartToCopy}.xml`] = `/xl/charts/${newChartName}.xml`
 
@@ -178,6 +216,23 @@ function copyChartFiles(
         fs.copyFileSync(`${sourceDir}xl/charts/${val}.xml`, `${targetDir}xl/charts/${thisFileName}.xml`)
         contentTypesUpdateObj[`/xl/charts/${val}.xml`] = `/xl/charts/${thisFileName}.xml`
     })
+
+    const newDefineNames: string[] = Object.values(newDefinedNamesObj)
+    const newExcelCellRefs = findChartCellRefs(sourceChartXML, Object.keys(targetExcel.worksheets))
+
+    const newChartObj = {
+        chartRels: {
+            colors: getNewColorsFileName,
+            style: getNewStyleFileName
+        },
+        cellRefs: newExcelCellRefs,
+        definedNameRefs: newDefineNames,
+    }
+
+    targetExcel.defineNames = targetExcel.defineNames.concat(newDefineNames)
+
+    if (!targetExcel.worksheets[targetWorksheet]?.charts) targetExcel.worksheets[targetWorksheet].charts = {}
+    targetExcel.worksheets[targetWorksheet].charts[newChartName] = newChartObj
 
     return newDefinedNamesObj
 }
@@ -230,7 +285,7 @@ function addWorksheetDrawingTag(
     })
 }
 
-function newDrawingXML(
+function newDrawingXML( //if no drawing exists for target worksheet then the source file needs to be copied, with only a relation to the target chart.
     source: workbookChartDetails,
     target: workbookChartDetails,
     sourceWorksheet: string,
@@ -320,6 +375,7 @@ function newDrawingRels( //if drawing.xml does not exist for target worksheet
     const newChartName: string = getNewName(chartToCopy, target.chartList) //used for naming drawing.xml and drawing.xml.rels
 
     const newDrawingName = getNewName('drawing1', target.drawingList) //used for naming drawing.xml and drawing.xml.rels
+    target.worksheets[targetWorksheet].drawing = newDrawingName
     if (!fs.existsSync(`${targetDir}xl/drawings/_rels/`)) {
         fs.mkdirSync(`${targetDir}xl/drawings/_rels/`, { recursive: true }) //make drawing directory if it doesnt exist yet.
     } else { //if drawing directory exists and target worksheet has drawing file, read drawing file and update rID Output list so that we can find a new rId for drawing relation.
@@ -343,7 +399,7 @@ function newDrawingRels( //if drawing.xml does not exist for target worksheet
             if (refChartName === chartToCopy) {
                 rel['$'].Target = `../charts/${newChartName}.xml`
                 rel['$'].Id = rId
-                target.worksheets[targetWorksheet][newChartName] = rId
+
                 editXML.Relationships.Relationship = [rel] //if match, create file with single relationship, representing new chart. rId can stay the same.
             }
         })
@@ -352,6 +408,8 @@ function newDrawingRels( //if drawing.xml does not exist for target worksheet
         fs.writeFileSync(`${targetDir}/xl/drawings/_rels/${newDrawingName}.xml.rels`, xml)
 
     })
+
+    target.worksheets[targetWorksheet].drawingRels = { [newChartName]: rId }
 
     return [rId, newChartName, newDrawingName]
 
@@ -394,6 +452,10 @@ function updateDrawingRels(  //if drawing.xml exists for target worksheet combin
         fs.writeFileSync(`${targetDir}/xl/drawings/_rels/${target.worksheets[targetWorksheet].drawing}.xml.rels`, xml)
     })
 
+    target?.worksheets?.[targetWorksheet]?.drawingRels?.[newChartName] ?
+        target.worksheets[targetWorksheet].drawingRels[newChartName] = rId :
+        target.worksheets[targetWorksheet].drawingRels = { [newChartName]: rId }
+
     return [rId, newChartName, '']
 }
 
@@ -413,13 +475,13 @@ export function copyChart(
         newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, contentTypesUpdateObj)
         addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet)
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet)
-        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj)
+        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet)
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     } else {
         const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
         updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
-        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj)
+        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet)
         copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     }

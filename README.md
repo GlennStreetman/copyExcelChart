@@ -1,3 +1,5 @@
+# WARNING: Under active development. Use with extreme caution or as code example.
+
 ## Copy charts between excel files using Node file system operations. 
  Currently working with basic excel .xlsx charts, that pull data from cell ranges. <br>
  Not yet tested with pivot charts or charts that reference named ranges or tables.
