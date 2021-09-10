@@ -1,18 +1,19 @@
-import {readCharts} from './../build/readCharts.js'
-import {copyChart} from './../build/copyChart.js'
-import {writeCharts} from './../build/writeChart.js'
+import {readCharts} from './../../build/readCharts.js'
+import {copyChart} from './../../build/copyChart.js'
+import {writeCharts} from './../../build/writeChart.js'
 import util from 'util'
 import fs from 'fs';
 
-const testrun = async ()=>{
+const testrun = async ()=>{ 
+    //copy charts from one .xlsx worksheet to many .xlsx worksheets.
     
-    if(!fs.existsSync('./tests//working')) fs.mkdirSync('./tests/working')
+    if(!fs.existsSync('./tests/copyFromOneToManySheets/working')) fs.mkdirSync('./tests/copyFromOneToManySheets/working')
 
-    const source = await readCharts('./tests/source.xlsx', './tests/working')
+    const source = await readCharts('./tests/copyFromOneToManySheets/source.xlsx', './tests/copyFromOneToManySheets/working')
     // console.log(util.inspect(source, false, null, true))
     // console.log('source', source.summary())
 
-    const output = await readCharts('./tests/target.xlsx', './tests/working')
+    const output = await readCharts('./tests/copyFromOneToManySheets/target.xlsx', './tests/copyFromOneToManySheets/working')
     // console.log(util.inspect(output, false, null, true))
     // console.log('output', output.summary())
 
@@ -71,8 +72,8 @@ const testrun = async ()=>{
     // console.log(util.inspect(output, false, null, true))
     // console.log('output', output.summary())
 
-    await writeCharts(output, './tests/product.xlsx')
-    fs.rmdirSync('./tests/working', { recursive: true })
+    await writeCharts(output, './tests/copyFromOneToManySheets/product.xlsx')
+    fs.rmdirSync('./tests/copyFromOneToManySheets/working', { recursive: true })
 }
 
 testrun()
