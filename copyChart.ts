@@ -405,8 +405,9 @@ function newDrawingRels( //if drawing.xml does not exist for target worksheet
             })
         }
     }
-
+    console.log('rIdOutputList', rIdOutputList)
     let rId: string = getNewName('rId1', rIdOutputList)
+    console.log('rIdOutputList2', rIdOutputList, rId)
 
     const drawingSourceRelsXML = fs.readFileSync(`${sourceDir}xl/drawings/_rels/${sourceDrawingName}.xml.rels`, { encoding: 'utf-8' }) //`${targetDir}xl/drawings/${drawingName}.xml`
     xml2js.parseString(drawingSourceRelsXML, (error, editXML) => {
@@ -475,7 +476,7 @@ function updateDrawingRels(  //if drawing.xml exists for target worksheet combin
     return [rId, newChartName, '']
 }
 
-export function copyChart(
+export async function copyChart(
     sourceExcel: workbookChartDetails, //chart source object returned from readCharts. Includes chart details and source xml directory
     targetExcel: workbookChartDetails, //target excel object returned from readCharts. Includes chart details and source xml directory
     sourceWorksheet: string, //alias of source worksheet
@@ -501,4 +502,5 @@ export function copyChart(
         copyDefineNames(sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChartName, stringOverrides, newDefinedNamesRefsObj)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     }
+    return true
 }
