@@ -73,7 +73,7 @@ const testrun = async ()=>{
     // console.log('output', output.summary())
 
     await writeCharts(output, './tests/copyFromOneToManySheets/product.xlsx')
-    fs.rmdirSync('./tests/copyFromOneToManySheets/working', { recursive: true })
+    // fs.rmdirSync('./tests/copyFromOneToManySheets/working', { recursive: true })
 }
 
 testrun()
