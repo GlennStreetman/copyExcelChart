@@ -9,7 +9,7 @@ export interface workbookChartDetails {
     drawingList: string[],
     drawingXMLs: drawingId,
     chartList: string[],
-    defineNames: string[],
+    defineNameRefs: string[],
     summary: Function,
     colorList: string[],
     styleList: string[],
@@ -124,13 +124,14 @@ function buildChartDetails(
     definedNameRefs: definedNameRefs,
     chartRels: chartRelList,
     drawingrIds: drawingId,
+    definedNameKeys: any,
 ): workbookChartDetails {
     const workbook: workbookChartDetails = {
         tempDir: tempFolder,
         drawingList: buildDrawingList(drawingList),
         drawingXMLs: drawingXMLs,
         chartList: buildChartList(chartList),
-        defineNames: buildChartList(definedNameRefs),
+        defineNameRefs: definedNameKeys ? definedNameKeys : [], //buildChartList(definedNameRefs)
         colorList: buildFileList(chartRels, 'colors'),
         styleList: buildFileList(chartRels, 'style'),
         worksheets: function () {
@@ -194,7 +195,7 @@ function findChartRels(chartList: chartList, tempFolder: string): chartRelList {
     return chartRels
 }
 
-function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string, definedNames: { [key: string]: string }): [cellRefs, definedNameRefs] {
+function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string, definedNames: { [key: string]: string }): [cellRefs, definedNameRefs, string[]] {
     const cellRefs: cellRefs = {}
     const definedNameRefs: definedNameRefs = {}
     const tempRefs = {}
@@ -231,11 +232,12 @@ function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string, 
 
                 cellRefs[chart] = [...new Set(cellRefs[chart].concat(matchList))]
             })
-            //some chart types use named ranges that are stored in worbook.xml. The refs to workbook.xml look like _xlchart.v
+            //some chart types use named ranges that are stored in worbook.xml. The refs to workbook.xml look like _xlchart.v?.?
             definedNameRefs[chart] = []
             let refRegex = new RegExp(`>_xlchart.v[0-9]{1,9}.[0-9]{1,10}<`, 'g')
             let matchingDefinedNameRefs = [...new Set(chartXML.match(refRegex))].forEach((el) => {
-                tempRefs[el.slice(1, el.length - 1)] = chart
+                const foundRef = el.slice(1, el.length - 1)
+                tempRefs[foundRef] = chart
             })
         })
     })
@@ -243,16 +245,10 @@ function findChartCellRefs(chartList: chartList, aliaslist, tempFolder: string, 
     Object.entries(definedNames).forEach(([key, val]) => {
         if (tempRefs[key]) definedNameRefs[tempRefs[key]].push(val)
     })
-    // const workbookXML = fs.readFileSync(`${tempFolder}/xl/workbook.xml`, { encoding: 'utf-8' })
-    // xml2js.parseString(workbookXML, async (error, res) => {
-    //     if (res.workbook.definedNames) {
-    //         res.workbook.definedNames[0].definedName.forEach((el) => {
-    //             // console.log('el', el, tempRefs)
-    //             if (tempRefs[el['$'].name]) definedNameRefs[tempRefs[el['$'].name]].push(el['_'])
-    //         })
-    //     }
-    // })
-    return [cellRefs, definedNameRefs]
+
+    const definedNameKeys: string[] = Object.keys(tempRefs)
+
+    return [cellRefs, definedNameRefs, definedNameKeys]
 }
 
 function findDrawingXML(drawingObj: drawingId, sourceFolder: string): drawingId {
@@ -367,9 +363,9 @@ export function readCharts(
             const drawingList = findDrawingRels(worksheetNames, sourceFolder) //returns {[alias]: drawings}
             const [chartList, drawingrIds] = Object.keys(drawingList).length > 0 ? parseDrawingRels(drawingList, sourceFolder) : [{}, {}] //find associated charts and xml blob associated with drawing in drawing.xml
             const findDrawingXMLs = Object.keys(drawingrIds).length > 0 ? findDrawingXML(drawingrIds, sourceFolder) : drawingrIds //drawing xml file.
-            const [cellRefs, definedNameRefs] = Object.keys(chartList).length > 0 ? findChartCellRefs(chartList, Object.keys(worksheetNames), sourceFolder, definedNames) : [{}, {}] //excel formula ranges and and cell refs.
+            const [cellRefs, definedNameRefs, definedNameKeys] = Object.keys(chartList).length > 0 ? findChartCellRefs(chartList, Object.keys(worksheetNames), sourceFolder, definedNames) : [{}, {}] //excel formula ranges and and cell refs.
             const chartRefs = Object.keys(chartList).length > 0 ? findChartRels(chartList, sourceFolder) : {} //related chart xmls. Style & colors.
-            const chartDetails = buildChartDetails(sourceFolder, worksheetNames, drawingList, findDrawingXMLs, chartList, cellRefs, definedNameRefs, chartRefs, drawingrIds)
+            const chartDetails = buildChartDetails(sourceFolder, worksheetNames, drawingList, findDrawingXMLs, chartList, cellRefs, definedNameRefs, chartRefs, drawingrIds, definedNameKeys)
             resolve(chartDetails)
         } catch (error) {
             console.log('Read file error. Path: ', sourceFile, 'Error: ', error)

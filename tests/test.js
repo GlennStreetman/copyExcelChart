@@ -10,7 +10,7 @@ const testrun = async ()=>{
     if(!fs.existsSync('./tests//working')) fs.mkdirSync('./tests/working')
 
     const source = await readCharts('./tests/source.xlsx', './tests/working')
-    console.log(util.inspect(source, false, null, true))
+    // console.log(util.inspect(source, false, null, true))
     // console.log('source', source.summary())
 
     const output = await readCharts('./tests/target.xlsx', './tests/working')
@@ -32,11 +32,9 @@ const testrun = async ()=>{
         replaceCellRefs1, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
 
-    const replaceCellRefs2 = source.summary().chartWorksheet['chart1'].reduce((acc, el)=>{
-        return {...acc, [el]: el.replace('earningsWorksheet1', 'worksheet-EBIT')}
+    const replaceCellRefs2 = source.summary().chartWorksheet['chartEx1'].reduce((acc, el)=>{
+        return {...acc, [el]: el.replace('earningsWorksheet1', "worksheet-EBIT")}
     }, {})
-
-    // console.log(replaceCellRefs2)
 
     await copyChart(
         source,
@@ -48,9 +46,10 @@ const testrun = async ()=>{
     )
 
     // console.log(output)
-    console.log(util.inspect(output, false, null, true))
+
     await writeCharts(output, './tests/product.xlsx')
-    fs.rmdirSync('./tests/working', { recursive: true })
+    console.log('---------FINAL------', util.inspect(output, false, null, true))
+    // fs.rmdirSync('./tests/working', { recursive: true })
 }
 
 testrun()

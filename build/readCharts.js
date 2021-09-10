@@ -31,13 +31,13 @@ function buildFileList(chartRels, ref) {
     });
     return returnList;
 }
-function buildChartDetails(tempFolder, worksheetNames, drawingList, drawingXMLs, chartList, cellRefs, definedNameRefs, chartRels, drawingrIds) {
+function buildChartDetails(tempFolder, worksheetNames, drawingList, drawingXMLs, chartList, cellRefs, definedNameRefs, chartRels, drawingrIds, definedNameKeys) {
     const workbook = {
         tempDir: tempFolder,
         drawingList: buildDrawingList(drawingList),
         drawingXMLs: drawingXMLs,
         chartList: buildChartList(chartList),
-        defineNames: buildChartList(definedNameRefs),
+        defineNameRefs: definedNameKeys ? definedNameKeys : [],
         colorList: buildFileList(chartRels, 'colors'),
         styleList: buildFileList(chartRels, 'style'),
         worksheets: function () {
@@ -133,11 +133,12 @@ function findChartCellRefs(chartList, aliaslist, tempFolder, definedNames) {
                 matchList = [...new Set(matchList.concat(matchListCellNoCommas).concat(matchListCellCommas))];
                 cellRefs[chart] = [...new Set(cellRefs[chart].concat(matchList))];
             });
-            //some chart types use named ranges that are stored in worbook.xml. The refs to workbook.xml look like _xlchart.v
+            //some chart types use named ranges that are stored in worbook.xml. The refs to workbook.xml look like _xlchart.v?.?
             definedNameRefs[chart] = [];
             let refRegex = new RegExp(`>_xlchart.v[0-9]{1,9}.[0-9]{1,10}<`, 'g');
             let matchingDefinedNameRefs = [...new Set(chartXML.match(refRegex))].forEach((el) => {
-                tempRefs[el.slice(1, el.length - 1)] = chart;
+                const foundRef = el.slice(1, el.length - 1);
+                tempRefs[foundRef] = chart;
             });
         });
     });
@@ -145,16 +146,8 @@ function findChartCellRefs(chartList, aliaslist, tempFolder, definedNames) {
         if (tempRefs[key])
             definedNameRefs[tempRefs[key]].push(val);
     });
-    // const workbookXML = fs.readFileSync(`${tempFolder}/xl/workbook.xml`, { encoding: 'utf-8' })
-    // xml2js.parseString(workbookXML, async (error, res) => {
-    //     if (res.workbook.definedNames) {
-    //         res.workbook.definedNames[0].definedName.forEach((el) => {
-    //             // console.log('el', el, tempRefs)
-    //             if (tempRefs[el['$'].name]) definedNameRefs[tempRefs[el['$'].name]].push(el['_'])
-    //         })
-    //     }
-    // })
-    return [cellRefs, definedNameRefs];
+    const definedNameKeys = Object.keys(tempRefs);
+    return [cellRefs, definedNameRefs, definedNameKeys];
 }
 function findDrawingXML(drawingObj, sourceFolder) {
     const returnObj = {};
@@ -269,9 +262,9 @@ tempFolder) {
             const drawingList = findDrawingRels(worksheetNames, sourceFolder); //returns {[alias]: drawings}
             const [chartList, drawingrIds] = Object.keys(drawingList).length > 0 ? parseDrawingRels(drawingList, sourceFolder) : [{}, {}]; //find associated charts and xml blob associated with drawing in drawing.xml
             const findDrawingXMLs = Object.keys(drawingrIds).length > 0 ? findDrawingXML(drawingrIds, sourceFolder) : drawingrIds; //drawing xml file.
-            const [cellRefs, definedNameRefs] = Object.keys(chartList).length > 0 ? findChartCellRefs(chartList, Object.keys(worksheetNames), sourceFolder, definedNames) : [{}, {}]; //excel formula ranges and and cell refs.
+            const [cellRefs, definedNameRefs, definedNameKeys] = Object.keys(chartList).length > 0 ? findChartCellRefs(chartList, Object.keys(worksheetNames), sourceFolder, definedNames) : [{}, {}]; //excel formula ranges and and cell refs.
             const chartRefs = Object.keys(chartList).length > 0 ? findChartRels(chartList, sourceFolder) : {}; //related chart xmls. Style & colors.
-            const chartDetails = buildChartDetails(sourceFolder, worksheetNames, drawingList, findDrawingXMLs, chartList, cellRefs, definedNameRefs, chartRefs, drawingrIds);
+            const chartDetails = buildChartDetails(sourceFolder, worksheetNames, drawingList, findDrawingXMLs, chartList, cellRefs, definedNameRefs, chartRefs, drawingrIds, definedNameKeys);
             resolve(chartDetails);
         }
         catch (error) {

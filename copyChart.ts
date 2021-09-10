@@ -2,7 +2,6 @@ import fs from 'fs';
 import xml2js from 'xml2js';
 
 import { workbookChartDetails, worksheetObj } from 'readCharts'
-import { resourceLimits } from 'worker_threads';
 
 interface stringOverrides {
     [key: string]: string
@@ -10,28 +9,45 @@ interface stringOverrides {
 
 function copyDefineNames( //
     sourceExcel: workbookChartDetails,
+    sourceWorksheet: string,
+    chartToCopy: string,
     targetExcel: workbookChartDetails,
-    newDefinedNamesObj: { [key: string]: string },
+    targetWorksheet: string,
+    newChartName: string,
     stringOverrides: stringOverrides,
+    newDefinedNamesRefsObj: Object
 ) {
 
-
-    if (Object.keys(newDefinedNamesObj).length > 0) {
+    if (Object.keys(sourceExcel.worksheets[sourceWorksheet].charts[chartToCopy].definedNameRefs).length > 0) { //copy defineNamed refs from source workbook.xml to target workbook.xml
 
         const sourceDir = sourceExcel.tempDir
         const targetDir = targetExcel.tempDir
 
+        let newRelList: string[] = []
+
         let addDefs: any[] = []
         const sourceWookbook = `${sourceDir}xl/workbook.xml`
-        const souceDefs = fs.readFileSync(sourceWookbook, { encoding: 'utf-8' })
-        xml2js.parseString(souceDefs, (error, editXML) => { //read source workbook
+        const sourceXML = fs.readFileSync(sourceWookbook, { encoding: 'utf-8' })
+        xml2js.parseString(sourceXML, (error, editXML) => { //read source workbook
             editXML.workbook.definedNames[0].definedName.forEach((rel) => {  //if source defineName in newDefinedNameObj, update definename.name and push to update list.
-                if (newDefinedNamesObj[rel['$'].name]) rel['$'].name = newDefinedNamesObj[rel['$'].name]
-                if (stringOverrides[rel['_']]) rel['_'] = stringOverrides[rel['_']]
+                if (newDefinedNamesRefsObj[rel['$'].name]) {
+                    const newRefValue = stringOverrides[rel['_']]
+                    if (newRefValue) newRelList.push(newRefValue)
 
-                addDefs.push(rel)
+                    rel['_'] = `'${stringOverrides[rel['_']]}`.replace("!", "'!")
+                    rel['$'].name = newDefinedNamesRefsObj[rel['$'].name]
+                    addDefs.push(rel)
+                }
+                // if (stringOverrides[rel['_']]) {
+                //     const newRefValue = stringOverrides[rel['_']]
+                //     rel['_'] = stringOverrides[rel['_']]
+                //     newRelList.push(newRefValue)
+                //     addDefs.push(rel)
+                // }
             })
         })
+        console.log('newRelList', newRelList, 'addDefs', addDefs)
+
         const outputWorkbook = `${targetDir}xl/workbook.xml`
         const outputFile = fs.readFileSync(outputWorkbook, { encoding: 'utf-8' })
         xml2js.parseString(outputFile, (error, editXML) => { //read source workbook
@@ -51,6 +67,10 @@ function copyDefineNames( //
             }
             const builder = new xml2js.Builder()
             const xml = builder.buildObject(editXML)
+
+            targetExcel.defineNameRefs = [...targetExcel.defineNameRefs, ...newRelList]
+            targetExcel.worksheets[targetWorksheet].charts[newChartName].definedNameRefs = newRelList
+
             fs.writeFileSync(`${targetDir}/xl/workbook.xml`, xml)
         })
     }
@@ -106,14 +126,15 @@ function getNewName(newName: string, targetList: string[], iterator = 0): string
     }
 }
 
-function getNewDdefinedNameRef(newName: string, targetList: string[], iterator = 0): string {
-    if (!targetList.includes(newName)) {
-        targetList.push(newName)
-        return newName
+function getNewDefinedNameRef(newName: string, targetList: string[], iterator = new Date().getTime()): string {
+    const testName = `${newName}.${iterator}`
+    if (!targetList.includes(testName)) {
+        targetList.push(testName)
+        return testName
     } else {
         const updateIterator = iterator + 1
-        const updateNewName = newName.slice(0, newName.lastIndexOf('.')) + iterator
-        return getNewDdefinedNameRef(updateNewName, targetList, updateIterator)
+        // const updateNewName = newName.slice(0, newName.lastIndexOf('.')) + iterator
+        return getNewDefinedNameRef(newName, targetList, updateIterator)
     }
 }
 
@@ -148,8 +169,6 @@ function findChartCellRefs(xml: string, worksheetList: string[]): string[] {
         tempRefs = [...new Set(tempRefs.concat(tempRefs))]
     })
 
-    console.log('findChartCellRefs', tempRefs, worksheetList)
-
     return tempRefs
 }
 
@@ -167,7 +186,7 @@ function copyChartFiles(
     const sourceDir = sourceExcel.tempDir
     const targetDir = targetExcel.tempDir
 
-    if (!fs.existsSync(`${targetDir}xl/charts/_rels/`)) fs.mkdirSync(`${targetDir}xl/charts/_rels/`, { recursive: true })
+    if (!fs.existsSync(`${targetDir}xl/charts/_rels/`)) fs.mkdirSync(`${targetDir}xl/charts/_rels/`, { recursive: true }) //make directory if needed
 
     const getNewColorsFileName = getNewName('colors1', targetExcel.colorList)
     const getNewStyleFileName = getNewName('style1', targetExcel.styleList)
@@ -176,35 +195,37 @@ function copyChartFiles(
     //COPY SOURCE RELS FILE
     const sourceRelsFile = `${sourceDir}xl/charts/_rels/${chartToCopy}.xml.rels`
     const sourceRelsXML = fs.readFileSync(sourceRelsFile, { encoding: 'utf-8' })
-    xml2js.parseString(sourceRelsXML, (error, editXML) => {
+    xml2js.parseString(sourceRelsXML, (error, editXML) => { //read list of related files.
         editXML.Relationships.Relationship.forEach((rel) => {  //update rels with new chart name
             if (rel['$'].Target.includes('colors')) rel['$'].Target = `${getNewColorsFileName}.xml`
             if (rel['$'].Target.includes('style')) rel['$'].Target = `${getNewStyleFileName}.xml`
         })
         const builder = new xml2js.Builder()
         const xml = builder.buildObject(editXML)
-        fs.writeFileSync(`${targetDir}/xl/charts/_rels/${newChartName}.xml.rels`, xml)
+        fs.writeFileSync(`${targetDir}/xl/charts/_rels/${newChartName}.xml.rels`, xml) //write rels file
     })
 
     //COPY SOURCE CHART FILE. Update any cell references refs (ex. A1:B2) AND definedName name refs.(ex. '_xlchart.v1.0')
     const sourceChartFile = `${sourceDir}xl/charts/${chartToCopy}.xml`
     let sourceChartXML = fs.readFileSync(sourceChartFile, { encoding: 'utf-8' })
-    //update cell references.
-    Object.entries(stringOverrides).forEach(([key, val]) => {
+
+    Object.entries(stringOverrides).forEach(([key, val]) => { //replace all cell references with overrides.
         const newKey = key.replace(/\$/g, '\\$')
         const regExKey = new RegExp(`>${newKey}<`, 'g')
         sourceChartXML = sourceChartXML.replace(regExKey, `>${val}<`)
     })
 
-    //update definedName Refs
-    const newDefinedNamesObj = sourceExcel.worksheets[sourceWorksheet].charts[chartToCopy].definedNameRefs.reduce((acc, el) => {
-        const newDefinedNameRef = getNewDdefinedNameRef(el, targetExcel.defineNames)
-        sourceChartXML = sourceChartXML.replace(new RegExp(`>${el}<`, 'g'), `>${newDefinedNameRef}<`)
-        return { ...acc, [el]: newDefinedNameRef }
+    // create definedName ref object. {Old ref: new ref}
+    let refRegex = new RegExp(`>_xlchart.v[0-9]{1,9}.[0-9]{1,10}<`, 'g')
+    const foundDefineNameRefs: string[] = [...new Set(sourceChartXML.match(refRegex))]
+
+    const newDefinedNamesRefsObj = foundDefineNameRefs.reduce((acc, el) => {
+        const oldName = el.slice(1, el.length - 1)
+        const newDefinedNameRef = getNewDefinedNameRef('_xlchart.v1', targetExcel.defineNameRefs)
+        console.log('REPLACE', el, `>${newDefinedNameRef}<`)
+        sourceChartXML = sourceChartXML.replace(new RegExp(`${el}`, 'g'), `>${newDefinedNameRef}<`) //override source reference with new reference.
+        return { ...acc, [oldName]: newDefinedNameRef }
     }, {})
-
-    console.log('newDefinedNamesObj', newDefinedNamesObj)
-
 
     fs.writeFileSync(`${targetDir}/xl/charts/${newChartName}.xml`, sourceChartXML)
     contentTypesUpdateObj[`/xl/charts/${chartToCopy}.xml`] = `/xl/charts/${newChartName}.xml`
@@ -217,8 +238,7 @@ function copyChartFiles(
         contentTypesUpdateObj[`/xl/charts/${val}.xml`] = `/xl/charts/${thisFileName}.xml`
     })
 
-    const newDefineNames: string[] = Object.values(newDefinedNamesObj)
-    const newExcelCellRefs = findChartCellRefs(sourceChartXML, Object.keys(targetExcel.worksheets))
+    const newExcelCellRefs = findChartCellRefs(sourceChartXML, [...Object.keys(sourceExcel.worksheets), ...Object.keys(targetExcel.worksheets)])
 
     const newChartObj = {
         chartRels: {
@@ -226,15 +246,13 @@ function copyChartFiles(
             style: getNewStyleFileName
         },
         cellRefs: newExcelCellRefs,
-        definedNameRefs: newDefineNames,
+        definedNameRefs: [],
     }
-
-    targetExcel.defineNames = targetExcel.defineNames.concat(newDefineNames)
 
     if (!targetExcel.worksheets[targetWorksheet]?.charts) targetExcel.worksheets[targetWorksheet].charts = {}
     targetExcel.worksheets[targetWorksheet].charts[newChartName] = newChartObj
 
-    return newDefinedNamesObj
+    return newDefinedNamesRefsObj
 }
 
 function addWorksheetRelsFile(
@@ -475,14 +493,14 @@ export function copyChart(
         newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, contentTypesUpdateObj)
         addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet)
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet)
-        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet)
-        copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
+        const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet)
+        copyDefineNames(sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChartName, stringOverrides, newDefinedNamesRefsObj)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     } else {
         const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
         updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName)
-        const newDefinedNamesObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet)
-        copyDefineNames(sourceExcel, targetExcel, newDefinedNamesObj, stringOverrides)
+        const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet)
+        copyDefineNames(sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChartName, stringOverrides, newDefinedNamesRefsObj)
         updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName)
     }
 }
