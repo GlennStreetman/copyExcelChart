@@ -303,6 +303,7 @@ function newDrawingXML( //if no drawing exists for target worksheet then the sou
     targetWorksheet: string,
     rId: string,
     newDrawingName: string,
+    newChartName: string,
     contentTypesUpdateObj: { [key: string]: string }
 ) {
     const sourceDir = source.tempDir
@@ -320,7 +321,7 @@ function newDrawingXML( //if no drawing exists for target worksheet then the sou
         drawingSource['mc:AlternateContent'][0]['mc:Choice'][0]['xdr:graphicFrame'][0]['a:graphic'][0]['a:graphicData'][0]['cx:chart'][0]['$']['r:id'] = rId
     }
 
-    //if drawing.xml does not exist for target worksheet, copy source drawing.xml and set Relationships.relation =  source.drawingXML
+    //if drawing.xml does not exist for target worksheet, copy source drawing.xml and set Relationships.relation = source.drawingXML
     //make sure to update drawingXML rId = new rID passed into function. File name should match new drawing name.
     //this cannot be a equal copy. Only one of the source drawing xml subsections needs to be copied over if new file.
     fs.copyFileSync(`${sourceDir}xl/drawings/${source.worksheets[sourceWorksheet].drawing}.xml`, `${targetDir}xl/drawings/${newDrawingName}.xml`)
@@ -332,6 +333,8 @@ function newDrawingXML( //if no drawing exists for target worksheet then the sou
         fs.writeFileSync(`${targetDir}/xl/drawings/${newDrawingName}.xml`, xml)
         contentTypesUpdateObj[`/xl/drawings/${source.worksheets[sourceWorksheet].drawing}.xml`] = `/xl/drawings/${newDrawingName}.xml`
     })
+
+    target.drawingXMLs[newChartName] = drawingSource
 
 }
 
@@ -482,7 +485,7 @@ export function copyChart(
     if (!targetExcel.worksheets[targetWorksheet].drawing) { //if no drawing for target worksheet.
         //add chart tag to worksheet
         const [rId, newChartName, newDrawingName] = newDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet)
-        newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, contentTypesUpdateObj)
+        newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, newChartName, contentTypesUpdateObj)
         addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet)
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet)
         const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet)

@@ -216,7 +216,7 @@ function addWorksheetDrawingTag(rId, newDrawingName, target, targetWorksheet) {
     });
 }
 function newDrawingXML(//if no drawing exists for target worksheet then the source file needs to be copied, with only a relation to the target chart.
-source, target, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, contentTypesUpdateObj) {
+source, target, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, newChartName, contentTypesUpdateObj) {
     var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t, _u;
     const sourceDir = source.tempDir;
     const targetDir = target.tempDir;
@@ -231,7 +231,7 @@ source, target, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingNa
     if (rIdRegularEx) {
         drawingSource['mc:AlternateContent'][0]['mc:Choice'][0]['xdr:graphicFrame'][0]['a:graphic'][0]['a:graphicData'][0]['cx:chart'][0]['$']['r:id'] = rId;
     }
-    //if drawing.xml does not exist for target worksheet, copy source drawing.xml and set Relationships.relation =  source.drawingXML
+    //if drawing.xml does not exist for target worksheet, copy source drawing.xml and set Relationships.relation = source.drawingXML
     //make sure to update drawingXML rId = new rID passed into function. File name should match new drawing name.
     //this cannot be a equal copy. Only one of the source drawing xml subsections needs to be copied over if new file.
     fs.copyFileSync(`${sourceDir}xl/drawings/${source.worksheets[sourceWorksheet].drawing}.xml`, `${targetDir}xl/drawings/${newDrawingName}.xml`);
@@ -243,6 +243,7 @@ source, target, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingNa
         fs.writeFileSync(`${targetDir}/xl/drawings/${newDrawingName}.xml`, xml);
         contentTypesUpdateObj[`/xl/drawings/${source.worksheets[sourceWorksheet].drawing}.xml`] = `/xl/drawings/${newDrawingName}.xml`;
     });
+    target.drawingXMLs[newChartName] = drawingSource;
 }
 function updateDrawingXML(//if drawing.xml exists for target worksheet combine <xdr:twoCellAnchor> tags from source and target drawing file. New cellAnchor needs to have its rID updated.
 source, target, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName) {
@@ -355,7 +356,7 @@ stringOverrides) {
     if (!targetExcel.worksheets[targetWorksheet].drawing) { //if no drawing for target worksheet.
         //add chart tag to worksheet
         const [rId, newChartName, newDrawingName] = newDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet);
-        newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, contentTypesUpdateObj);
+        newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, newChartName, contentTypesUpdateObj);
         addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet);
         addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet);
         const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet);

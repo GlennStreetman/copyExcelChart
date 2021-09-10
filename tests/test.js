@@ -14,7 +14,7 @@ const testrun = async ()=>{
 
     const output = await readCharts('./tests/target.xlsx', './tests/working')
     // console.log(util.inspect(output, false, null, true))
-    // console.log('source', output.summary())
+    // console.log('output', output.summary())
 
     const replaceCellRefs1 = source.summary().chartWorksheet['chart1'].reduce((acc, el)=>{
         return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
@@ -67,6 +67,9 @@ const testrun = async ()=>{
         'worksheet-cashRatio', //worksheet, in output file, that chart will be copied to
         replaceCellRefs4, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
+
+    // console.log(util.inspect(output, false, null, true))
+    // console.log('output', output.summary())
 
     await writeCharts(output, './tests/product.xlsx')
     fs.rmdirSync('./tests/working', { recursive: true })
