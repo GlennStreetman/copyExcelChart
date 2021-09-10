@@ -69,11 +69,27 @@ const testrun = async ()=>{
         replaceCellRefs4, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
 
+    const replaceCellRefs5 = source.summary().chartWorksheet['chartEx2'].reduce((acc, el)=>{
+        return {...acc, [el]: el.replace('earningsWorksheet1', "worksheet-EBIT")}
+    }, {})
+
+    await copyChart(
+        source,
+        output,
+        'chartWorksheet', //worksheet, in source file, that chart will be copied from
+        'chartEx2', //chart that will be copied
+        'worksheet-EBIT', //worksheet, in output file, that chart will be copied to
+        replaceCellRefs5, //object containing key value pairs of cell references that will be replaced while chart is being copied.
+    )
+
+
     // console.log(util.inspect(output, false, null, true))
     // console.log('output', output.summary())
 
     await writeCharts(output, './tests/copyFromOneToManySheets/product.xlsx')
     // fs.rmdirSync('./tests/copyFromOneToManySheets/working', { recursive: true })
 }
+
+
 
 testrun()

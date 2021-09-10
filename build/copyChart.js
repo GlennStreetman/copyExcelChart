@@ -5,8 +5,8 @@ sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChar
     if (Object.keys(sourceExcel.worksheets[sourceWorksheet].charts[chartToCopy].definedNameRefs).length > 0) { //copy defineNamed refs from source workbook.xml to target workbook.xml
         const sourceDir = sourceExcel.tempDir;
         const targetDir = targetExcel.tempDir;
-        let newRelList = [];
-        let addDefs = [];
+        let newRelList = []; //string list of cell references in relations.
+        let addDefs = []; //new list of xml relationships
         const sourceWookbook = `${sourceDir}xl/workbook.xml`;
         const sourceXML = fs.readFileSync(sourceWookbook, { encoding: 'utf-8' });
         xml2js.parseString(sourceXML, (error, editXML) => {
@@ -16,7 +16,7 @@ sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChar
                     if (newRefValue)
                         newRelList.push(newRefValue);
                     const newValSource = stringOverrides[rel['_']];
-                    const newVal = newValSource[0] !== "'" ? `'${newValSource}`.replace("!", "'!") : newValSource;
+                    const newVal = newValSource && newValSource[0] !== "'" ? `'${newValSource}`.replace("!", "'!") : newValSource;
                     rel['_'] = newVal;
                     rel['$'].name = newDefinedNamesRefsObj[rel['$'].name];
                     addDefs.push(rel);
@@ -27,10 +27,10 @@ sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChar
         const outputFile = fs.readFileSync(outputWorkbook, { encoding: 'utf-8' });
         xml2js.parseString(outputFile, (error, editXML) => {
             if (editXML.workbook.definedNames) {
-                editXML.workbook.definedNames[0].definedName.concat(addDefs);
+                editXML.workbook.definedNames[0].definedName = editXML.workbook.definedNames[0].definedName.concat(addDefs);
             }
             else { //need to copy from old xml, and insure that definedNames follows </sheets> tag
-                const newWorkbookObj = {};
+                const newWorkbookObj = {}; //DefinedNames must follow sheets tag.
                 Object.entries(editXML.workbook).forEach(([key, val]) => {
                     if (key !== 'sheets') {
                         newWorkbookObj[key] = val;
