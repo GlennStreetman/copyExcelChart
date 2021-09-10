@@ -4,7 +4,7 @@
     "name": "copy-excel-chart",
     "description": "Copy .xlsx charts between .xlsx files.",
     "main": "copy-excel-chart.js",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "dependencies": {
         "adm-zip": "^0.5.5",
         "xml2js": "^0.4.23"
