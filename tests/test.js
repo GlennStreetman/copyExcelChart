@@ -11,7 +11,7 @@ const testrun = async ()=>{
 
     const source = await readCharts('./tests/source.xlsx', './tests/working')
     // console.log(util.inspect(source, false, null, true))
-    // console.log('source', source.summary())
+    console.log('source', source.summary())
 
     const output = await readCharts('./tests/target.xlsx', './tests/working')
     // console.log(util.inspect(output, false, null, true))
@@ -45,11 +45,37 @@ const testrun = async ()=>{
         replaceCellRefs2, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
 
-    // console.log(output)
+    const replaceCellRefs3 = source.summary().chartWorksheet['chart2'].reduce((acc, el)=>{
+        return {...acc, [el]: el.replace('candleWorksheet3', "worksheet-candle")}
+    }, {})
+
+    await copyChart(
+        source,
+        output,
+        'chartWorksheet', //worksheet, in source file, that chart will be copied from
+        'chart2', //chart that will be copied
+        'worksheet-candle', //worksheet, in output file, that chart will be copied to
+        replaceCellRefs3, //object containing key value pairs of cell references that will be replaced while chart is being copied.
+    )
+
+    const replaceCellRefs4 = source.summary().chartWorksheet['chart3'].reduce((acc, el)=>{
+        return {...acc, [el]: el.replace('cashWorksheet4', "worksheet-cashRatio")}
+    }, {})
+
+    await copyChart(
+        source,
+        output,
+        'chartWorksheet', //worksheet, in source file, that chart will be copied from
+        'chart3', //chart that will be copied
+        'worksheet-cashRatio', //worksheet, in output file, that chart will be copied to
+        replaceCellRefs4, //object containing key value pairs of cell references that will be replaced while chart is being copied.
+    )
+
+    
 
     await writeCharts(output, './tests/product.xlsx')
-    console.log('---------FINAL------', util.inspect(output, false, null, true))
-    // fs.rmdirSync('./tests/working', { recursive: true })
+    // console.log('---------FINAL------', util.inspect(output, false, null, true))
+    fs.rmdirSync('./tests/working', { recursive: true })
 }
 
 testrun()
