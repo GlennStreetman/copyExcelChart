@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import fs from 'fs';
 import xml2js from 'xml2js';
 function copyDefineNames(//
@@ -304,9 +295,7 @@ source, target, sourceWorksheet, chartToCopy, targetWorksheet) {
             });
         }
     }
-    console.log('rIdOutputList', rIdOutputList);
     let rId = getNewName('rId1', rIdOutputList);
-    console.log('rIdOutputList2', rIdOutputList, rId);
     const drawingSourceRelsXML = fs.readFileSync(`${sourceDir}xl/drawings/_rels/${sourceDrawingName}.xml.rels`, { encoding: 'utf-8' }); //`${targetDir}xl/drawings/${drawingName}.xml`
     xml2js.parseString(drawingSourceRelsXML, (error, editXML) => {
         editXML.Relationships.Relationship.forEach((rel) => {
@@ -366,26 +355,32 @@ sourceWorksheet, //alias of source worksheet
 chartToCopy, //chart, from chartDetails, that is copied by this operation
 targetWorksheet, //alias of sheet that chart will be copied to. Alias is the sheet name visable to an ecxel user.
 stringOverrides) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const contentTypesUpdateObj = {}; //partNameSource : partNameOutput
-        if (!targetExcel.worksheets[targetWorksheet].drawing) { //if no drawing for target worksheet.
-            //add chart tag to worksheet
-            const [rId, newChartName, newDrawingName] = newDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet);
-            newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, newChartName, contentTypesUpdateObj);
-            addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet);
-            addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet);
-            const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet);
-            copyDefineNames(sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChartName, stringOverrides, newDefinedNamesRefsObj);
-            updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName);
+    return new Promise((resolve, reject) => {
+        try {
+            const contentTypesUpdateObj = {}; //partNameSource : partNameOutput
+            if (!targetExcel.worksheets[targetWorksheet].drawing) { //if no drawing for target worksheet.
+                //add chart tag to worksheet
+                const [rId, newChartName, newDrawingName] = newDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet);
+                newDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName, newChartName, contentTypesUpdateObj);
+                addWorksheetDrawingTag(rId, newDrawingName, targetExcel, targetWorksheet);
+                addWorksheetRelsFile(rId, newDrawingName, targetExcel, sourceExcel, targetWorksheet, sourceWorksheet);
+                const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet);
+                copyDefineNames(sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChartName, stringOverrides, newDefinedNamesRefsObj);
+                updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName);
+            }
+            else {
+                const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet);
+                updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName);
+                const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet);
+                copyDefineNames(sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChartName, stringOverrides, newDefinedNamesRefsObj);
+                updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName);
+            }
+            resolve(true);
         }
-        else {
-            const [rId, newChartName, newDrawingName] = updateDrawingRels(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet);
-            updateDrawingXML(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, targetWorksheet, rId, newDrawingName);
-            const newDefinedNamesRefsObj = copyChartFiles(sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName, stringOverrides, contentTypesUpdateObj, targetWorksheet);
-            copyDefineNames(sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChartName, stringOverrides, newDefinedNamesRefsObj);
-            updateContentTypes(contentTypesUpdateObj, sourceExcel, targetExcel, sourceWorksheet, chartToCopy, newChartName);
+        catch (error) {
+            console.log('Copy chart error. targetWorksheet: ', targetWorksheet, 'Chart:', chartToCopy, 'Error: ', error);
+            reject(error);
         }
-        return true;
     });
 }
 //# sourceMappingURL=copyChart.js.map
