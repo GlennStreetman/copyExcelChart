@@ -38,15 +38,8 @@ function copyDefineNames( //
                     rel['$'].name = newDefinedNamesRefsObj[rel['$'].name]
                     addDefs.push(rel)
                 }
-                // if (stringOverrides[rel['_']]) {
-                //     const newRefValue = stringOverrides[rel['_']]
-                //     rel['_'] = stringOverrides[rel['_']]
-                //     newRelList.push(newRefValue)
-                //     addDefs.push(rel)
-                // }
             })
         })
-        console.log('newRelList', newRelList, 'addDefs', addDefs)
 
         const outputWorkbook = `${targetDir}xl/workbook.xml`
         const outputFile = fs.readFileSync(outputWorkbook, { encoding: 'utf-8' })
@@ -222,7 +215,6 @@ function copyChartFiles(
     const newDefinedNamesRefsObj = foundDefineNameRefs.reduce((acc, el) => {
         const oldName = el.slice(1, el.length - 1)
         const newDefinedNameRef = getNewDefinedNameRef('_xlchart.v1', targetExcel.defineNameRefs)
-        console.log('REPLACE', el, `>${newDefinedNameRef}<`)
         sourceChartXML = sourceChartXML.replace(new RegExp(`${el}`, 'g'), `>${newDefinedNameRef}<`) //override source reference with new reference.
         return { ...acc, [oldName]: newDefinedNameRef }
     }, {})
