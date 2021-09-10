@@ -34,7 +34,10 @@ function copyDefineNames( //
                     const newRefValue = stringOverrides[rel['_']]
                     if (newRefValue) newRelList.push(newRefValue)
 
-                    rel['_'] = `'${stringOverrides[rel['_']]}`.replace("!", "'!")
+                    const newValSource = stringOverrides[rel['_']]
+                    const newVal = newValSource[0] !== "'" ? `'${newValSource}`.replace("!", "'!") : newValSource
+
+                    rel['_'] = newVal
                     rel['$'].name = newDefinedNamesRefsObj[rel['$'].name]
                     addDefs.push(rel)
                 }
@@ -205,7 +208,8 @@ function copyChartFiles(
     Object.entries(stringOverrides).forEach(([key, val]) => { //replace all cell references with overrides.
         const newKey = key.replace(/\$/g, '\\$')
         const regExKey = new RegExp(`>${newKey}<`, 'g')
-        sourceChartXML = sourceChartXML.replace(regExKey, `>${val}<`)
+        const newVal = val[0] !== "'" ? `'${val}`.replace("!", "'!") : val
+        sourceChartXML = sourceChartXML.replace(regExKey, `>${newVal}<`)
     })
 
     // create definedName ref object. {Old ref: new ref}
