@@ -392,6 +392,7 @@ function newDrawingRels( //if drawing.xml does not exist for target worksheet
 
     const newDrawingName = getNewName('drawing1', target.drawingList) //used for naming drawing.xml and drawing.xml.rels
     target.worksheets[targetWorksheet].drawing = newDrawingName
+
     if (!fs.existsSync(`${targetDir}xl/drawings/_rels/`)) {
         fs.mkdirSync(`${targetDir}xl/drawings/_rels/`, { recursive: true }) //make drawing directory if it doesnt exist yet.
     } else { //if drawing directory exists and target worksheet has drawing file, read drawing file and update rID Output list so that we can find a new rId for drawing relation.
@@ -415,10 +416,11 @@ function newDrawingRels( //if drawing.xml does not exist for target worksheet
             if (refChartName === chartToCopy) {
                 rel['$'].Target = `../charts/${newChartName}.xml`
                 rel['$'].Id = rId
-
+                target.worksheets[targetWorksheet].drawingRels[refChartName] = rId
                 editXML.Relationships.Relationship = [rel] //if match, create file with single relationship, representing new chart. rId can stay the same.
             }
         })
+
         const builder = new xml2js.Builder()
         const xml = builder.buildObject(editXML)
         fs.writeFileSync(`${targetDir}/xl/drawings/_rels/${newDrawingName}.xml.rels`, xml)
@@ -451,7 +453,8 @@ function updateDrawingRels(  //if drawing.xml exists for target worksheet combin
             const refChartName = rel['$'].Target.replace('../charts/', '').replace('.xml', '')
             if (refChartName === chartToCopy) {
                 rId = getNewName('rId1', Object.values(target.worksheets[targetWorksheet].drawingRels))
-                target.worksheets[targetWorksheet][newChartName] = rId
+                target.worksheets[targetWorksheet].drawingRels[newChartName] = rId
+                // target.worksheets[targetWorksheet][newChartName] = rId
                 sourceRelTag = rel
                 sourceRelTag['$'].Id = rId
                 sourceRelTag['$'].Target = `../charts/${newChartName}.xml`

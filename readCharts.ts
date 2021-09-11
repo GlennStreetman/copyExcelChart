@@ -85,7 +85,7 @@ interface drawObj {
 }
 
 interface drawingId { //key is drawing name
-    [key: string]: drawObj
+    [key: string]: drawObj //worksheet: drawObj
 }
 
 
@@ -139,15 +139,19 @@ function buildChartDetails(
                 return {
                     ...acc, [key]: {
                         name: val,
+                        drawing: '',
+                        drawingRels: {},
+                        charts: {},
                     }
                 }
             }, {})
             Object.keys(worksheetList).forEach((worksheet) => {
+
                 if (drawingList[worksheet]) worksheetList[worksheet]['drawing'] = drawingList[worksheet]
                 if (worksheetList[worksheet].drawing) {
                     const drawingName = worksheetList[worksheet].drawing
                     worksheetList[worksheet].drawingRels = Object.entries(drawingrIds[drawingName]).reduce((acc, [key, val]) => { return { ...acc, [val]: key } }, {}) //returns drawingName: rId
-                    worksheetList[worksheet].charts = {}
+                    // worksheetList[worksheet].charts = {}
                     chartList[worksheetList[worksheet].drawing].forEach((chart) => {
                         worksheetList[worksheet].charts[chart] = {
                             chartRels: chartRels[chart],

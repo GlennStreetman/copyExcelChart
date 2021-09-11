@@ -44,6 +44,9 @@ function buildChartDetails(tempFolder, worksheetNames, drawingList, drawingXMLs,
             const worksheetList = Object.entries(worksheetNames).reduce((acc, [key, val]) => {
                 return Object.assign(Object.assign({}, acc), { [key]: {
                         name: val,
+                        drawing: '',
+                        drawingRels: {},
+                        charts: {},
                     } });
             }, {});
             Object.keys(worksheetList).forEach((worksheet) => {
@@ -52,7 +55,7 @@ function buildChartDetails(tempFolder, worksheetNames, drawingList, drawingXMLs,
                 if (worksheetList[worksheet].drawing) {
                     const drawingName = worksheetList[worksheet].drawing;
                     worksheetList[worksheet].drawingRels = Object.entries(drawingrIds[drawingName]).reduce((acc, [key, val]) => { return Object.assign(Object.assign({}, acc), { [val]: key }); }, {}); //returns drawingName: rId
-                    worksheetList[worksheet].charts = {};
+                    // worksheetList[worksheet].charts = {}
                     chartList[worksheetList[worksheet].drawing].forEach((chart) => {
                         worksheetList[worksheet].charts[chart] = {
                             chartRels: chartRels[chart],

@@ -303,6 +303,7 @@ source, target, sourceWorksheet, chartToCopy, targetWorksheet) {
             if (refChartName === chartToCopy) {
                 rel['$'].Target = `../charts/${newChartName}.xml`;
                 rel['$'].Id = rId;
+                target.worksheets[targetWorksheet].drawingRels[refChartName] = rId;
                 editXML.Relationships.Relationship = [rel]; //if match, create file with single relationship, representing new chart. rId can stay the same.
             }
         });
@@ -328,7 +329,8 @@ source, target, sourceWorksheet, chartToCopy, targetWorksheet) {
             const refChartName = rel['$'].Target.replace('../charts/', '').replace('.xml', '');
             if (refChartName === chartToCopy) {
                 rId = getNewName('rId1', Object.values(target.worksheets[targetWorksheet].drawingRels));
-                target.worksheets[targetWorksheet][newChartName] = rId;
+                target.worksheets[targetWorksheet].drawingRels[newChartName] = rId;
+                // target.worksheets[targetWorksheet][newChartName] = rId
                 sourceRelTag = rel;
                 sourceRelTag['$'].Id = rId;
                 sourceRelTag['$'].Target = `../charts/${newChartName}.xml`;
