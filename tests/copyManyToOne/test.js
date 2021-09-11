@@ -4,16 +4,16 @@ import {writeCharts} from './../../build/writeChart.js'
 import util from 'util'
 import fs from 'fs';
 
-export const copyFromOneToManySheets = async ()=>{ 
+export const copyManyToOne = async ()=>{ 
     //copy charts from one .xlsx worksheet to many .xlsx worksheets.
     console.log('starting test')
-    if(!fs.existsSync('./tests/copyFromOneToManySheets/working')) fs.mkdirSync('./tests/copyFromOneToManySheets/working')
+    if(!fs.existsSync('./tests/copyManyToOne/working')) fs.mkdirSync('./tests/copyManyToOne/working')
 
-    const source = await readCharts('./tests/copyFromOneToManySheets/source.xlsx', './tests/copyFromOneToManySheets/working/')
+    const source = await readCharts('./tests/copyManyToOne/source.xlsx', './tests/copyManyToOne/working/')
     // console.log(util.inspect(source, false, null, true))
     // console.log('source', source.summary())
 
-    const output = await readCharts('./tests/copyFromOneToManySheets/target.xlsx', './tests/copyFromOneToManySheets/working')
+    const output = await readCharts('./tests/copyManyToOne/target.xlsx', './tests/copyManyToOne/working')
     // console.log(util.inspect(output, false, null, true))
     // console.log('output', output.summary())
 
@@ -26,7 +26,7 @@ export const copyFromOneToManySheets = async ()=>{
         output,
         'chartWorksheet', //worksheet, in source file, that chart will be copied from
         'chart1', //chart that will be copied
-        'worksheet-Recommendation', //worksheet, in output file, that chart will be copied to
+        'target', //worksheet, in output file, that chart will be copied to
         replaceCellRefs1, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
 
@@ -39,7 +39,7 @@ export const copyFromOneToManySheets = async ()=>{
         output,
         'chartWorksheet', //worksheet, in source file, that chart will be copied from
         'chartEx1', //chart that will be copied
-        'worksheet-EBIT', //worksheet, in output file, that chart will be copied to
+        'target', //worksheet, in output file, that chart will be copied to
         replaceCellRefs2, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
 
@@ -52,7 +52,7 @@ export const copyFromOneToManySheets = async ()=>{
         output,
         'chartWorksheet', //worksheet, in source file, that chart will be copied from
         'chart2', //chart that will be copied
-        'worksheet-candle', //worksheet, in output file, that chart will be copied to
+        'target', //worksheet, in output file, that chart will be copied to
         replaceCellRefs3, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
 
@@ -65,13 +65,13 @@ export const copyFromOneToManySheets = async ()=>{
         output,
         'chartWorksheet', //worksheet, in source file, that chart will be copied from
         'chart3', //chart that will be copied
-        'worksheet-cashRatio', //worksheet, in output file, that chart will be copied to
+        'target', //worksheet, in output file, that chart will be copied to
         replaceCellRefs4, //object containing key value pairs of cell references that will be replaced while chart is being copied.
     )
 
     // console.log(util.inspect(output, false, null, true))
     // console.log('output', output.summary())
 
-    await writeCharts(output, './tests/copyFromOneToManySheets/product.xlsx')
+    await writeCharts(output, './tests/copyManyToOne/product.xlsx')
     // fs.rmdirSync('./tests/copyFromOneToManySheets/working', { recursive: true })
 }
