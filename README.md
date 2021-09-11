@@ -196,8 +196,6 @@ fs.rmdirSync('./working', { recursive: true })
 # API
 
 ### copyExcelChart.readCharts()
-
-copy-excel-chart.readCharts() <br>
     Returns an object that DETAILS workbook --> Worksheet --> Chart relationships.<br>
     Return type includes helper method, .summary(), that SUMMARIZES workbook --> Worksheet --> Chart relationships<br>
     .summary() should be significantly easier to run looping functions against than the detail.<br>
@@ -209,7 +207,7 @@ Function readCharts(
 )
 ```
 
-copy-excel-chart.copyChart()<br>
+### copy-excel-chart.copyChart()<br>
     Updates toObject .xml files and updates updates toObject relationships.
     Copies a single chart. Run multiple times, with additional chart names, to copy multiple charts.
 ```
@@ -223,7 +221,7 @@ Function copyChart(
 )
 ```
 
-copy-excel-chart.writeChart()
+### copy-excel-chart.writeChart()
 ```
 Function writeChart(
     to Object: readCharts() return object,
