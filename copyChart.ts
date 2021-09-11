@@ -30,13 +30,16 @@ function copyDefineNames( //
         xml2js.parseString(sourceXML, (error, editXML) => { //read source workbook
             editXML.workbook.definedNames[0].definedName.forEach((rel) => {  //if source defineName in newDefinedNameObj, update definename.name and push to update list.
                 if (newDefinedNamesRefsObj[rel['$'].name]) {
-                    const newRefValue = stringOverrides[rel['_']]
-                    if (newRefValue) newRelList.push(newRefValue)
 
-                    const newValSource = stringOverrides[rel['_']]
-                    const newVal = newValSource && newValSource[0] !== "'" ? `'${newValSource}`.replace("!", "'!") : newValSource
+                    if (stringOverrides[rel['_']]) {
+                        newRelList.push(stringOverrides[rel['_']])
+                        const newValSource = stringOverrides[rel['_']]
+                        const newVal = newValSource && newValSource[0] !== "'" ? `'${newValSource}`.replace("!", "'!") : newValSource
+                        rel['_'] = newVal
+                    } else {
+                        newRelList.push(rel['_'])
+                    }
 
-                    rel['_'] = newVal
                     rel['$'].name = newDefinedNamesRefsObj[rel['$'].name]
                     addDefs.push(rel)
                 }
@@ -484,7 +487,7 @@ export function copyChart(
     sourceWorksheet: string, //alias of source worksheet
     chartToCopy: string, //chart, from chartDetails, that is copied by this operation
     targetWorksheet: string, //alias of sheet that chart will be copied to. Alias is the sheet name visable to an ecxel user.
-    stringOverrides: stringOverrides, //list of source worksheet cell references that need to be replaced. ex: {[worksheet1!A1:B2] : newWorksheet!A1:B2} 
+    stringOverrides: stringOverrides = {}, //list of source worksheet cell references that need to be replaced. ex: {[worksheet1!A1:B2] : newWorksheet!A1:B2} 
 ) {
     return new Promise((resolve, reject) => {
         try {

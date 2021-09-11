@@ -12,12 +12,15 @@ sourceExcel, sourceWorksheet, chartToCopy, targetExcel, targetWorksheet, newChar
         xml2js.parseString(sourceXML, (error, editXML) => {
             editXML.workbook.definedNames[0].definedName.forEach((rel) => {
                 if (newDefinedNamesRefsObj[rel['$'].name]) {
-                    const newRefValue = stringOverrides[rel['_']];
-                    if (newRefValue)
-                        newRelList.push(newRefValue);
-                    const newValSource = stringOverrides[rel['_']];
-                    const newVal = newValSource && newValSource[0] !== "'" ? `'${newValSource}`.replace("!", "'!") : newValSource;
-                    rel['_'] = newVal;
+                    if (stringOverrides[rel['_']]) {
+                        newRelList.push(stringOverrides[rel['_']]);
+                        const newValSource = stringOverrides[rel['_']];
+                        const newVal = newValSource && newValSource[0] !== "'" ? `'${newValSource}`.replace("!", "'!") : newValSource;
+                        rel['_'] = newVal;
+                    }
+                    else {
+                        newRelList.push(rel['_']);
+                    }
                     rel['$'].name = newDefinedNamesRefsObj[rel['$'].name];
                     addDefs.push(rel);
                 }
@@ -356,7 +359,7 @@ targetExcel, //target excel object returned from readCharts. Includes chart deta
 sourceWorksheet, //alias of source worksheet
 chartToCopy, //chart, from chartDetails, that is copied by this operation
 targetWorksheet, //alias of sheet that chart will be copied to. Alias is the sheet name visable to an ecxel user.
-stringOverrides) {
+stringOverrides = {}) {
     return new Promise((resolve, reject) => {
         try {
             const contentTypesUpdateObj = {}; //partNameSource : partNameOutput
