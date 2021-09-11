@@ -195,10 +195,11 @@ fs.rmdirSync('./working', { recursive: true })
 
 # API
 
-### copyExcelChart.readCharts()
-    Returns an object that DETAILS workbook --> Worksheet --> Chart relationships.<br>
-    Return type includes helper method, .summary(), that SUMMARIZES workbook --> Worksheet --> Chart relationships<br>
-    .summary() should be significantly easier to run looping functions against than the detail.<br>
+### copyExcelChart.readCharts() <br>
+
+Returns an object that DETAILS workbook --> Worksheet --> Chart relationships.<br>
+Return type includes helper method, .summary(), that SUMMARIZES workbook --> Worksheet --> Chart relationships<br>
+.summary() should be significantly easier to run looping functions against than the detail.<br>
 
 ```
 Function readCharts(
@@ -207,9 +208,9 @@ Function readCharts(
 )
 ```
 
-### copy-excel-chart.copyChart()<br>
-    Updates toObject .xml files and updates updates toObject relationships.
-    Copies a single chart. Run multiple times, with additional chart names, to copy multiple charts.
+### copy-excel-chart.copyChart() <br>
+Updates toObject .xml files and updates updates toObject relationships.
+Copies a single chart. Run multiple times, with additional chart names, to copy multiple charts.
 ```
 Function copyChart( 
     fromObject: readCharts() return object, 
@@ -222,9 +223,10 @@ Function copyChart(
 ```
 
 ### copy-excel-chart.writeChart()
+From the provided objects .xml files, write a new excel file.
 ```
 Function writeChart(
-    to Object: readCharts() return object,
+    toObject: readCharts() return object,
     file name: string
 )
 ```
