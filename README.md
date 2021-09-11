@@ -197,8 +197,8 @@ fs.rmdirSync('./working', { recursive: true })
 
 ### copyExcelChart.readCharts() <br>
 
-Returns an object that DETAILS workbook --> Worksheet --> Chart relationships.<br>
-Return type includes helper method, .summary(), that SUMMARIZES workbook --> Worksheet --> Chart relationships<br>
+Returns an object that DETAILS worksheet chart relationships.<br>
+Return type includes helper method, .summary(), that SUMMARIZES worksheet chart relationships<br>
 .summary() should be significantly easier to run looping functions against than the detail.<br>
 
 ```
@@ -209,16 +209,16 @@ Function readCharts(
 ```
 
 ### copy-excel-chart.copyChart() <br>
-Updates toObject .xml files and updates updates toObject relationships.
+Updates toObject .xml files and updates updates toObject relationships. <br>
 Copies a single chart. Run multiple times, with additional chart names, to copy multiple charts.
 ```
 Function copyChart( 
-    fromObject: readCharts() return object, 
+    fromObject: readCharts() return object,  
     toObject: readCharts() return object,  
-    source worksheet: string,
-    source chart: string,  
-    move to worksheet: string, 
-    cell reference overrides: {[key: string]: string} 
+    source worksheet: string,                    //source worksheet name is the worksheet alias viewable in an excel workbook
+    source chart: string,                        //source chart name can be found using readCharts().summary()
+    move to worksheet: string,                   //worksheet name visable in the output excel workbook.
+    cell reference overrides:{[string]: string}, //object containing key value pairs that are used to update cell references. ex: {worksheet1!A1:B2: newWorksheet: C1:D2}
 )
 ```
 
