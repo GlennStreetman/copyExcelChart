@@ -1,8 +1,10 @@
 # WARNING: Under active development. Use with extreme caution or as code example.
+ Make sure you are using the most recent version of this package.
 
 ## Copy charts between excel files using Node file system operations. 
  Currently working with basic excel .xlsx charts, that pull data from cell ranges. <br>
- Not yet tested with pivot charts or charts that reference named ranges or tables.
+ Not yet tested with pivot charts or charts that reference named ranges or tables.<br>
+ Make sure you are using the most recent version of this package.
 
 ## Dependancies:
 [xm2js](https://www.npmjs.com/package/xml2js) : Used to convert excel .xml source files into JSON objects. <br> 
@@ -53,11 +55,13 @@ Setup imports
 ```
 import copyExcelChart from 'copy-excel-chart'
 import fs from 'fs'
+```
+Setup shortcuts:
+```
 const readCharts = copyExcelChart.readCharts
 const copyChart = copyExcelChart.copyChart
 const writeCharts = copyExcelChart.writeCharts
 ```
-
 Create a working folder. Make sure fs is imported!
 ```
 if(!fs.existsSync('./working')) fs.mkdirSync('./working') 
@@ -65,18 +69,10 @@ if(!fs.existsSync('./working')) fs.mkdirSync('./working')
 
 Read an excel file that contains source charts useing the readCharts() function. <br>
 ```
-Function readCharts(
-    source File: string, 
-    working directory: string
-)
-```
-Returns an Object describing the source files charts.<br>
-readCharts() also creates a working folder that contains the individual xml source files from the provided .xlsx file.<br>
-```
-const source = await readCharts('./source.xlsx', './working') 
+const source = await readCharts('./source.xlsx', './working')
 ```
 
-Run source.summary() to get a list of worksheets, each worksheets charts, and each charts cell references. This is a helper function. <br>
+Run source.summary() to get a list of worksheets, each worksheets charts, and each charts cell references.<br>
 ```
 Function source.summary()
  ```
@@ -133,7 +129,7 @@ console.log('Worksheet Summary:', source.summary())
 > }
 ```
 
-Repeat the steps of above for the excel xlsx file that your will be copying charts into. <br>
+Repeat the steps from above for the excel xlsx file that your will be copying charts into. <br>
 ```
 const output = await readCharts('./target.xlsx', './working') 
 console.log('Worksheet Summary:', output.summary())
@@ -147,9 +143,10 @@ console.log('Worksheet Summary:', output.summary())
 ```
 
 Create a cell reference replacement object. <br>
-This step is necesarry if the new chart needs cell references that point to a new location. <br>
+This step is necesarry if the chart being copied needs updated cell references that point to a new location. <br>
 Replacement Object: {[old reference]: new reference} <br>
 example: {oldworksheet!A1:B20: newWorksheet!A1:B15}<br>
+The Reducer function below creates an object that will be used to replace chart1's cell references with new references that point to the worksheet 'worksheet-Recommendation' instead of worksheet 'recommendWorksheet2'.
 ```
 const replaceCellRefs = source.summary()['chartWorksheet']['chart1'].reduce((acc, el)=>{
     return {...acc, [el]: el.replace('recommendWorksheet2', 'worksheet-Recommendation')}
@@ -171,18 +168,8 @@ console.log('Cell Reference overrides:', replaceCellRefs)
 > }
 
 ```
-Copy a chart from source working file to output working file using the copyChart() function.<br>
-```
-Function copyChart( 
-    from Object: readCharts() return object, 
-    to Object: readCharts() return object,  
-    source worksheet: string,
-    source chart: string,  
-    move to worksheet: string, 
-    cell reference overrides: {[key: string]: string} 
-)
-```
-copyChart edits the to Objects working file .xmls
+Copy a chart from the source working files to  the output working files using the copyChart() function.<br>
+Note that each time copyChart runs it edits the output file.xml(s) and updates the output object with all changes.
 ```
 copyChart(
     source, 
@@ -195,12 +182,7 @@ copyChart(
 ```
 
 If additional charts need to be copied do so here by performing addtional copyChart() operations. <br>
-```
-Function writeChart(
-    to Object: readCharts() return object,
-    file name: string
-)
-```
+
 Write a new excel file: product.xlsx from the output working file using the writeChart() function <br>
 ```
 writeCharts(output, './product.xlsx') 
@@ -209,4 +191,42 @@ writeCharts(output, './product.xlsx')
 Clean up old files <br>
 ```
 fs.rmdirSync('./working', { recursive: true })
+```
+
+# API
+
+### copyExcelChart.readCharts()
+
+copy-excel-chart.readCharts() <br>
+    Returns an object that DETAILS workbook --> Worksheet --> Chart relationships.<br>
+    Return type includes helper method, .summary(), that SUMMARIZES workbook --> Worksheet --> Chart relationships<br>
+    .summary() should be significantly easier to run looping functions against than the detail.<br>
+
+```
+Function readCharts(
+    source File: string,        //The path of the excel file you will be copying charts from
+    working directory: string,  //a temporary working directory for file read/write operations.
+)
+```
+
+copy-excel-chart.copyChart()<br>
+    Updates toObject .xml files and updates updates toObject relationships.
+    Copies a single chart. Run multiple times, with additional chart names, to copy multiple charts.
+```
+Function copyChart( 
+    fromObject: readCharts() return object, 
+    toObject: readCharts() return object,  
+    source worksheet: string,
+    source chart: string,  
+    move to worksheet: string, 
+    cell reference overrides: {[key: string]: string} 
+)
+```
+
+copy-excel-chart.writeChart()
+```
+Function writeChart(
+    to Object: readCharts() return object,
+    file name: string
+)
 ```
