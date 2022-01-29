@@ -1,4 +1,4 @@
-# WARNING: The XML schema can very between charts and additional testing is necessary to prove that it works for all chart types
+# WARNING: The XML schema can very between charts and additional testing is necessary to prove that this library works for all chart types
 
 Consider using [excels internal JavaScript API](https://docs.microsoft.com/en-us/office/dev/add-ins/excel/excel-add-ins-charts) BEFORE using this library.  
 If Excel is not available in your working environment and you still need to copy excel charts using JavaScript, consider using this library as a code example and thoroughly test your use cases before deploying.  
