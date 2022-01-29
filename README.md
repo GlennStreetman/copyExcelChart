@@ -233,7 +233,7 @@ Function readCharts(
 )
 ```
 
-### copy-excel-chart.copyChart() <br>
+### copyExcelChart.copyChart() <br>
 
 Updates toObject .xml files and updates updates toObject relationships. <br>
 Copies a single chart. Run multiple times, with additional chart names, to copy multiple charts.
@@ -249,7 +249,7 @@ Function copyChart(
 )
 ```
 
-### copy-excel-chart.writeChart()
+### copyExcelChartt.writeChart()
 
 From the provided objects .xml files, write a new excel file.
 
