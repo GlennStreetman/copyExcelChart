@@ -8,6 +8,7 @@ XML schema can differ between each chart type and this library has not been thor
 
 Currently working with basic excel .xlsx charts, that pull data from cell ranges. <br>
 Not yet tested with pivot charts or charts that reference named ranges or tables.<br>
+Excel chart XML schemas that create a new xml section for each x axis heading may not be supported<br>
 
 ## Dependencies:
 
